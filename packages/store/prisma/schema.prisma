@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(uuid()) 
+  clerkUserId       String           @unique                
+  email             String           @unique              
+  plan              Plan             @default(FREE)     
+  // stripeCustomerId  String?          @unique             
+  createdAt         DateTime         @default(now())        
+  updatedAt         DateTime         @updatedAt            
+  
+  websites          Website[]       
+  alertChannels     AlertChannel[] 
+  statusPages       StatusPage[]   
+  teams             TeamMember[]   
+  apiKeys           ApiKey[]        
+  notifications     Notification[]   
+  billingHistory    BillingHistory[] 
+  
+  deletedAt         DateTime?        
+  
+  @@index([plan])                  
+}
+
+model Website {
+  id                String           @id @default(uuid())
+  url               String      
+  name              String          
+  userId            String       
+  user              User             @relation(fields: [userId], references: [id])
+  
+  monitorInterval   Int              @default(60)  
+  dormancyProtection Boolean          @default(true) 
+  sslExpiryCheck    Boolean          @default(false)
+  
+  checks            Check[]         
+  alertChannels     AlertChannel[]  
+  statusPages       WebsiteOnStatusPage[] 
+  regions           Region[]         @relation("WebsiteRegions") 
+  teamWebsites      TeamWebsite[]
+  
+  createdAt         DateTime         @default(now())
+  deletedAt         DateTime?      
+  
+  @@index([userId])
+}
+
+model Check {
+  id                String           @id @default(uuid())
+  
+  websiteId         String           
+  website           Website          @relation(fields: [websiteId], references: [id])
+  regionId          String           
+  region            Region           @relation(fields: [regionId], references: [id])
+  
+  status            CheckStatus      @default(UNKNOWN) 
+  responseTime      Int           
+  statusCode        Int?             
+  error             String?         
+  
+  createdAt         DateTime         @default(now())  
+  
+  @@index([websiteId])
+  @@index([createdAt])  
+}
+
+model Region {
+  id                String           @id @default(uuid())
+  code              String           @unique
+  name              String        
+  provider          RegionProvider   @default(CLOUDFLARE)
+
+  checks            Check[]
+  websites          Website[]        @relation("WebsiteRegions")
+}
+
+model AlertChannel {
+  id                String           @id @default(uuid())
+  type              AlertType       
+  userId            String           
+  user              User             @relation(fields: [userId], references: [id])
+  
+  webhookUrl        String?          
+  email             String?         
+  phone             String?        
+  isActive          Boolean          @default(true)
+  
+  websites          Website[]       
+  
+  createdAt         DateTime         @default(now())
+}
+
+model StatusPage {
+  id                String           @id @default(uuid())
+  userId            String           
+  user              User             @relation(fields: [userId], references: [id])
+  
+  subdomain         String           @unique 
+  customDomain      String?          @unique 
+  title             String          
+  description       String?          
+  logoUrl           String?       
+  isPublic          Boolean          @default(true)
+  
+  websites          WebsiteOnStatusPage[]
+  
+  createdAt         DateTime         @default(now())
+}
+
+model WebsiteOnStatusPage {
+  websiteId         String           
+  statusPageId      String           
+  website           Website          @relation(fields: [websiteId], references: [id])
+  statusPage        StatusPage       @relation(fields: [statusPageId], references: [id])
+  position          Int             
+  
+  @@id([websiteId, statusPageId])  
+}
+
+model Team {
+  id                String           @id @default(uuid())
+  name              String        
+  plan              Plan             @default(FREE)
+  
+  members           TeamMember[]     
+  websites          TeamWebsite[]    
+  
+  createdAt         DateTime         @default(now())
+}
+
+model TeamMember {
+  id                String           @id @default(uuid())
+  teamId            String           
+  userId            String           
+  role              TeamRole         @default(MEMBER) 
+  
+  team              Team             @relation(fields: [teamId], references: [id])
+  user              User             @relation(fields: [userId], references: [id])
+  
+  createdAt         DateTime         @default(now())
+  @@unique([teamId, userId])        
+}
+
+model TeamWebsite {
+  teamId            String           
+  websiteId         String           
+  team              Team             @relation(fields: [teamId], references: [id])
+  website           Website?         @relation(fields: [websiteId], references: [id])
+  
+  @@id([teamId, websiteId])         
+}
+
+model ApiKey {
+  id                String           @id @default(uuid())
+  userId            String           
+  user              User             @relation(fields: [userId], references: [id])
+  
+  name              String           
+  key               String           @unique 
+  createdAt         DateTime         @default(now())
+  lastUsed          DateTime?      
+}
+
+model BillingHistory {
+  id                String           @id @default(uuid())
+  userId            String           
+  user              User             @relation(fields: [userId], references: [id])
+  
+  amount            Int              
+  currency          String           @default("usd")
+  description       String          
+  stripeSessionId   String?         
+  
+  createdAt         DateTime         @default(now())
+}
+
+model Notification {
+  id                String           @id @default(uuid())
+  userId            String           
+  user              User             @relation(fields: [userId], references: [id])
+
+  type              NotificationType 
+  title             String          
+  message           String           
+  isRead            Boolean          @default(false) 
+  
+  createdAt         DateTime         @default(now())
+}
+
+enum CheckStatus {
+  UP
+  DOWN
+  UNKNOWN
+}
+
+enum RegionProvider {
+  CLOUDFLARE  
+  AWS        
+  CUSTOM_VPS  
+}
+
+enum AlertType {
+  EMAIL
+  SMS
+  DISCORD
+  SLACK
+  WEBHOOK
+  TELEGRAM
+}
+
+enum TeamRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+enum Plan {
+  FREE    
+  STARTER 
+  PRO      
+  AGENCY   
+}
+
+enum NotificationType {
+  INCIDENT
+  MAINTENANCE
+  BILLING
+  ANNOUNCEMENT
+}
