@@ -13,6 +13,7 @@ model User {
   clerkUserId       String           @unique                
   email             String           @unique              
   plan              Plan             @default(FREE)     
+  signupMethod      String           
   // stripeCustomerId  String?          @unique             
   createdAt         DateTime         @default(now())        
   updatedAt         DateTime         @updatedAt            
