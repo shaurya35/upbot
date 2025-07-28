@@ -79,7 +79,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white" id="redirectForm">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Header - More Compact Mobile */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
         <div className="container mx-auto px-3 sm:px-6 lg:px-8">
@@ -117,7 +117,8 @@ export default function Home() {
               >
                 Sign In
               </Button> */}
-              <a href="#redirectForm">
+              <Link href="#">
+                {" "}
                 <Button
                   size="sm"
                   className="bg-emerald-600 hover:bg-emerald-700"
@@ -125,7 +126,7 @@ export default function Home() {
                   {/* Get Started */}
                   Join Waitlist
                 </Button>
-              </a>
+              </Link>
             </nav>
             <Button variant="ghost" size="sm" className="md:hidden h-8 w-8 p-0">
               <Activity className="h-4 w-4" />
@@ -457,7 +458,7 @@ export default function Home() {
                 </p>
                 <Button className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto text-sm">
                   {/* View all integrations */}
-                  <a href="#redirectForm">Join Waitlist</a>
+                  <Link href="#">Join Waitlist</Link>
                   <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </div>
@@ -695,8 +696,7 @@ export default function Home() {
                     size="lg"
                     className="bg-white text-emerald-600 hover:bg-emerald-50 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold w-full sm:w-auto"
                   >
-                    {/* View Demo Dashboard */}
-                    <a href="#redirectForm">Join Waitlist</a>
+                    <Link href="#">Join Waitlist</Link>
                     <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
@@ -705,7 +705,9 @@ export default function Home() {
                   variant="outline"
                   className="border-emerald-400/30 text-emerald-100 hover:bg-emerald-600 bg-transparent px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold w-full sm:w-auto"
                 >
-                   <a href="https://twitter.com/_shaurya35" target="_blank">Contact Us</a>
+                  <a href="https://twitter.com/_shaurya35" target="_blank">
+                    Contact Us
+                  </a>
                 </Button>
               </div>
 
