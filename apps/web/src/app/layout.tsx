@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,14 +17,32 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Upbot - Uptime Monitoring Platform",
+    default: "Upbot - A value-first uptime monitoring platform",
     template: "%s | Upbot",
   },
-  description: "Monitor websites from 7+ global locations with instant alerts, detailed analytics, and comprehensive downtime reporting. Free for hobbyists.",
+  description:
+    "Monitor websites from 15+ global locations with instant alerts, detailed analytics, and comprehensive downtime reporting. Free for hobbyists.",
   keywords: [
-    "uptime monitoring", "website monitoring", "server monitoring", 
-    "free uptime monitoring", "status page", "alerting", "downtime detection",
-    "SSL monitoring", "performance analytics", "website health"
+    "Upbot",
+    "User friendly",
+    "uptime monitoring",
+    "website monitoring",
+    "server monitoring",
+    "AI",
+    "Customization",
+    "Value driven",
+    "self-hosted",
+    "self-hosting",
+    "self-host",
+    "self-hosting",
+    "free uptime monitoring",
+    "free status page",
+    "free alerting",
+    "alerting",
+    "downtime detection",
+    "SSL monitoring",
+    "performance analytics",
+    "website health",
   ],
   metadataBase: new URL("https://upbot.space"),
   alternates: {
@@ -45,7 +63,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Upbot · Uptime Monitoring Made Simple",
-    description: "Monitor websites from 7+ global locations with instant alerts. Always free for hobbyists.",
+    description:
+      "Monitor websites from 15+ global locations with instant alerts. Always free for hobbyists.",
     url: "https://upbot.space",
     siteName: "Upbot",
     images: [
@@ -76,23 +95,23 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Upbot",
-  "description": "Comprehensive uptime monitoring platform with global coverage and instant alerts",
-  "url": "https://upbot.space",
-  "applicationCategory": "Developer Tools",
-  "operatingSystem": "Web",
-  "offers": {
+  name: "Upbot",
+  description:
+    "Comprehensive uptime monitoring platform with global coverage and instant alerts",
+  url: "https://upbot.space",
+  applicationCategory: "Developer Tools",
+  operatingSystem: "Web",
+  offers: {
     "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "USD"
+    price: "0",
+    priceCurrency: "USD",
   },
-  "aggregateRating": {
+  aggregateRating: {
     "@type": "AggregateRating",
-    "ratingValue": "4.9",
-    "reviewCount": "500"
-  }
+    ratingValue: "4.9",
+    reviewCount: "500",
+  },
 };
-
 
 export default function RootLayout({
   children,
@@ -106,15 +125,18 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-        
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, minimum-scale=1"
+        />
+
         <meta name="theme-color" content="#059669" />
         <link rel="manifest" href="/manifest.json" />
 
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
-      
+
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
