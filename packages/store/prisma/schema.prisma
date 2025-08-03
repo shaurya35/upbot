@@ -9,26 +9,35 @@ datasource db {
 }
 
 model User {
-  id                String           @id @default(uuid()) 
-  clerkUserId       String           @unique                
-  email             String           @unique              
-  plan              Plan             @default(FREE)     
-  signupMethod      String           
-  // stripeCustomerId  String?          @unique             
-  createdAt         DateTime         @default(now())        
-  updatedAt         DateTime         @updatedAt            
+  id                String           @id @default(uuid())
+  email             String           @unique
+  password          String?
+  name              String?
+  plan              Plan             @default(FREE)
+  signupMethod      String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  emailVerified     DateTime?
+
+  websites          Website[]
+  alertChannels     AlertChannel[]
+  statusPages       StatusPage[]
+  teams             TeamMember[]
+  apiKeys           ApiKey[]
+  notifications     Notification[]
+  billingHistory    BillingHistory[]
+  deletedAt         DateTime?
   
-  websites          Website[]       
-  alertChannels     AlertChannel[] 
-  statusPages       StatusPage[]   
-  teams             TeamMember[]   
-  apiKeys           ApiKey[]        
-  notifications     Notification[]   
-  billingHistory    BillingHistory[] 
-  
-  deletedAt         DateTime?        
-  
-  @@index([plan])                  
+  @@index([plan])
+}
+
+model OtpVerification {
+  id                String          @id @default(uuid())
+  email             String          @unique
+  otp               String
+  expiresAt         DateTime
+  attempts          Int             @default(0)
+  createdAt         DateTime        @default(now())
 }
 
 model Website {
