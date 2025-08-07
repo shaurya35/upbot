@@ -81,7 +81,7 @@ export default function Home() {
   return (
     <>
     <Head>
-    <link rel="canonical" href="https://upbot.com/" />
+    <link rel="canonical" href="https://upbot.space/" />
   </Head>
     <div className="flex flex-col min-h-screen bg-white">
       {/* Header - More Compact Mobile */}
