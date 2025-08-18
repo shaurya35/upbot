@@ -26,7 +26,6 @@ export default {
 		try {
 			data = await request.json();
 
-			// Validate required fields
 			if (!data.url || !data.websiteId || !data.regionId || !data.regionCode) {
 				return new Response('Missing required fields', { status: 400 });
 			}

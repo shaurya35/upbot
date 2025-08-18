@@ -5,20 +5,9 @@
 	"compatibility_date": "2025-08-18",
 	"node_compat": true,
 	"no_bundle": true,
-	"placement": {
-		"mode": "smart"
-	},
-	"vars": {
-		"DEFAULT_TIMEOUT": "10000",
-		"MAX_REGIONS": "5"
-	},
-	"observability": {
-		"enabled": true,
-		"logs": {
-			"enabled": true
-		},
-		"metrics": {
-			"enabled": true
-		}
+	"minify": true,
+	"build": {
+	  "command": "echo 'Skipping build'",
+	  "cwd": "."
 	}
-}
+  }
