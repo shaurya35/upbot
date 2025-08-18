@@ -7,7 +7,7 @@
 	"no_bundle": true,
 	"minify": true,
 	"build": {
-	  "command": "echo 'Skipping build'",
+	  "command": "echo 'No build needed'",
 	  "cwd": "."
 	}
   }
