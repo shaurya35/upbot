@@ -1,12 +1,12 @@
 {
-  "name": "redis",
+  "name": "redis-streams",
   "module": "index.ts",
   "type": "module",
-  "exports": {
-    "/client": "./index.ts"
-  },
   "devDependencies": {
     "@types/bun": "latest"
+  },
+  "exports": {
+    "./client": "./index.ts"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

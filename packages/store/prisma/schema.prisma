@@ -18,7 +18,7 @@ model User {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   emailVerified     DateTime?
-
+  //add company name
   websites          Website[]
   alertChannels     AlertChannel[]
   statusPages       StatusPage[]
@@ -213,8 +213,6 @@ enum CheckStatus {
 
 enum RegionProvider {
   CLOUDFLARE  
-  AWS        
-  CUSTOM_VPS  
 }
 
 enum AlertType {
