@@ -1,19 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -104,7 +91,7 @@ export const metadata: Metadata = {
     creator: "@_shaurya35",
     site: "@_shaurya35",
   },
-  manifest: "/site.webmanifest",
+  manifest: "/manifest.json",
   category: "Technology",
   classification: "Developer Tools",
 };
@@ -222,8 +209,6 @@ export default function RootLayout({
         {/* Performance Optimizations */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
         {/* Additional SEO Files */}
         <link rel="author" href="/humans.txt" />
@@ -231,7 +216,11 @@ export default function RootLayout({
 
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased font-sans"
+        style={{
+          "--font-geist-sans": "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
+          "--font-geist-mono": "ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace"
+        } as React.CSSProperties}
       >
         {children}
         <Analytics />
