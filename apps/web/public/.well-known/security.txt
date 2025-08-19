@@ -1,0 +1,6 @@
+Contact: https://twitter.com/_shaurya35
+Expires: 2025-12-31T23:59:59.000Z
+Encryption: none
+Acknowledgments: https://upbot.space
+Preferred-Languages: en
+Canonical: https://upbot.space/.well-known/security.txt

@@ -1,0 +1,15 @@
+# humanstxt.org
+
+/* TEAM */
+Developer: Shaurya
+Contact: https://twitter.com/_shaurya35
+Location: India
+
+/* SITE */
+Standards: HTML5, CSS3, JavaScript, TypeScript
+Components: Next.js, React, Tailwind CSS
+Software: VS Code, Git, Vercel
+
+/* THANKS */
+Built with love for the developer community
+Always free for hobbyists and personal projects
