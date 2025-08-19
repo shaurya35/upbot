@@ -7,8 +7,10 @@
 
 
 <url>
-  <loc>https://www.upbot.space/</loc>
+  <loc>https://upbot.space/</loc>
   <lastmod>2025-07-23T12:15:03+00:00</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>1.0</priority>
 </url>
 
 

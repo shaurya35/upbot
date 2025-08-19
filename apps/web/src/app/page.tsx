@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent } from "react";
-import Head from 'next/head';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,9 +79,21 @@ export default function Home() {
 
   return (
     <>
-    <Head>
-    <link rel="canonical" href="https://upbot.space/" />
-  </Head>
+    {/* Hidden SEO Content */}
+    <div className="sr-only">
+      <h2>Free Uptime Monitoring Service for Developers</h2>
+      <p>
+        Upbot provides free website monitoring and server uptime tracking for developers, startups, and hobbyists. 
+        Monitor your websites and APIs with our global network, get instant downtime alerts via email, SMS, and Slack. 
+        Join thousands of developers using our free monitoring platform with enterprise-grade reliability.
+      </p>
+      <p>
+        Features include: Global monitoring from 7+ locations, 30-second check intervals, SSL certificate monitoring, 
+        instant notifications, webhooks integration, status pages, and detailed analytics. Always free tier available 
+        for personal projects and small businesses.
+      </p>
+    </div>
+    
     <div className="flex flex-col min-h-screen bg-white">
       {/* Header - More Compact Mobile */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
@@ -141,7 +152,11 @@ export default function Home() {
 
       <main className="flex-1">
         {/* Hero Section - Cleaner Mobile Layout */}
-        <section className="relative overflow-hidden">
+        <section className="relative overflow-hidden" itemScope itemType="https://schema.org/SoftwareApplication">
+          <meta itemProp="name" content="Upbot" />
+          <meta itemProp="description" content="Free uptime monitoring platform for developers and startups" />
+          <meta itemProp="url" content="https://upbot.space" />
+          <meta itemProp="applicationCategory" content="DeveloperApplication" />
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white to-slate-50/30" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(148_163_184_/_0.15)_1px,transparent_0)] [background-size:24px_24px]" />
 
@@ -160,21 +175,22 @@ export default function Home() {
                 The most comprehensive
                 <br />
                 <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  Uptime Monitoring Platform
+                  Free Uptime Monitoring Platform
                 </span>
               </h1>
 
               <p className="mx-auto mb-6 sm:mb-12 max-w-2xl text-sm sm:text-lg md:text-xl text-slate-600 leading-normal px-1 sm:px-4 lg:px-0">
                 Monitor your websites from 7+ global locations with instant
                 alerts, detailed analytics, and comprehensive downtime
-                reporting.
+                reporting. Join our waitlist for early access to always-free monitoring for developers and hobbyists.
               </p>
 
               {/* Smaller, Cleaner Waitlist Form */}
-              <div className="mb-6 sm:mb-12 px-3 sm:px-0">
+              <div className="mb-6 sm:mb-12 px-3 sm:px-0" id="waitlist">
                 <form
                   onSubmit={handleWaitlistSubmit}
                   className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center max-w-lg mx-auto"
+                  aria-label="Join waitlist form"
                 >
                   <Input
                     type="email"
@@ -259,7 +275,7 @@ export default function Home() {
         </section>
 
         {/* Features Section - More Compact Mobile */}
-        <section className="py-12 sm:py-20 md:py-24 bg-slate-50/50">
+        <section className="py-12 sm:py-20 md:py-24 bg-slate-50/50" id="features" aria-labelledby="features-heading">
           <div className="container mx-auto px-3 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-16 md:mb-20">
               <Badge
@@ -268,7 +284,7 @@ export default function Home() {
               >
                 Upbot Components
               </Badge>
-              <h2 className="text-xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-6 px-1 sm:px-4 lg:px-0">
+              <h2 id="features-heading" className="text-xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-6 px-1 sm:px-4 lg:px-0">
                 Pixel-perfect monitoring,
                 <br />
                 deployed in minutes

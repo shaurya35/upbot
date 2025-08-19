@@ -1,9 +1,23 @@
-# *
+# Upbot.space robots.txt
+# Allow all crawlers to access all content
+
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
-# Host
-Host: https://www.upbot.space
+# Disallow crawling of API endpoints and private paths
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /*.json$
 
-# Sitemaps
-Sitemap: https://www.upbot.space/sitemap.xml
+# Allow specific files
+Allow: /manifest.json
+Allow: /sitemap.xml
+Allow: /robots.txt
+
+# Sitemap location
+Sitemap: https://upbot.space/sitemap.xml
+
+# Host preference
+Host: https://upbot.space
