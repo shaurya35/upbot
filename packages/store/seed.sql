@@ -1,0 +1,37 @@
+-- seed.sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+INSERT INTO "Region" (id, code, name, provider) VALUES
+  (gen_random_uuid(),'AMS','Amsterdam','CLOUDFLARE'),
+  (gen_random_uuid(),'LON','London','CLOUDFLARE'),
+  (gen_random_uuid(),'PAR','Paris','CLOUDFLARE'),
+  (gen_random_uuid(),'FRA','Frankfurt','CLOUDFLARE'),
+  (gen_random_uuid(),'MAD','Madrid','CLOUDFLARE'),
+  (gen_random_uuid(),'LIS','Lisbon','CLOUDFLARE'),
+  (gen_random_uuid(),'DUB','Dublin','CLOUDFLARE'),
+  (gen_random_uuid(),'NYC','New York','CLOUDFLARE'),
+  (gen_random_uuid(),'IAD','Ashburn (DC)','CLOUDFLARE'),
+  (gen_random_uuid(),'ATL','Atlanta','CLOUDFLARE'),
+  (gen_random_uuid(),'MIA','Miami','CLOUDFLARE'),
+  (gen_random_uuid(),'ORD','Chicago','CLOUDFLARE'),
+  (gen_random_uuid(),'SFO','San Francisco','CLOUDFLARE'),
+  (gen_random_uuid(),'LAX','Los Angeles','CLOUDFLARE'),
+  (gen_random_uuid(),'SEA','Seattle','CLOUDFLARE'),
+  (gen_random_uuid(),'YVR','Vancouver','CLOUDFLARE'),
+  (gen_random_uuid(),'TOR','Toronto','CLOUDFLARE'),
+  (gen_random_uuid(),'GRU','São Paulo','CLOUDFLARE'),
+  (gen_random_uuid(),'BOG','Bogotá','CLOUDFLARE'),
+  (gen_random_uuid(),'BUE','Buenos Aires','CLOUDFLARE'),
+  (gen_random_uuid(),'SIN','Singapore','CLOUDFLARE'),
+  (gen_random_uuid(),'HKG','Hong Kong','CLOUDFLARE'),
+  (gen_random_uuid(),'BKK','Bangkok','CLOUDFLARE'),
+  (gen_random_uuid(),'MNL','Manila','CLOUDFLARE'),
+  (gen_random_uuid(),'SYD','Sydney','CLOUDFLARE'),
+  (gen_random_uuid(),'MEL','Melbourne','CLOUDFLARE'),
+  (gen_random_uuid(),'AKL','Auckland','CLOUDFLARE'),
+  (gen_random_uuid(),'JNB','Johannesburg','CLOUDFLARE'),
+  (gen_random_uuid(),'CPT','Cape Town','CLOUDFLARE'),
+  (gen_random_uuid(),'DXB','Dubai','CLOUDFLARE'),
+  (gen_random_uuid(),'DEL','Delhi','CLOUDFLARE'),
+  (gen_random_uuid(),'BOM','Mumbai','CLOUDFLARE')
+ON CONFLICT (code) DO NOTHING;
