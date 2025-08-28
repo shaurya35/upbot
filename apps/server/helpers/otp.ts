@@ -1,6 +1,12 @@
 import nodemailer from "nodemailer";
+import crypto from "crypto";
+import { prisma } from "store/client";
 
-const sendOtpMail = async (email: string, otp: string) => {
+const generateOtp = () => {
+  return crypto.randomInt(100000, 999999);
+};
+
+const sendOtp = async (email: string, otp: string) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -38,4 +44,17 @@ const sendOtpMail = async (email: string, otp: string) => {
   await transporter.sendMail(mailOptions);
 };
 
-export { sendOtpMail };
+const resendOtp = async (email: string) => {
+  const otp = generateOtp().toString();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  await prisma.otpVerification.upsert({
+    where: { email },
+    update: { otp, expiresAt, attempts: 0 },
+    create: { email, otp, expiresAt },
+  });
+
+  await sendOtp(email, otp);
+};
+
+export { generateOtp, sendOtp, resendOtp };

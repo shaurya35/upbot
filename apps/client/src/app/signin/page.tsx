@@ -1,36 +1,42 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import Link from "next/link"
-import { Activity, Eye, EyeOff, Mail, Lock } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+import type React from "react";
+import { useState } from "react";
+import Link from "next/link";
+import { Activity, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { BACKEND_URL } from "@/configs/env";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
 export default function SignIn() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
     setError(null);
-    try{
+    try {
       const response = await axios.post(
         `${BACKEND_URL}/api/v1/auth/signin`,
         { email, password },
         { withCredentials: true }
-      )
+      );
       if (response.status === 200) {
         const { accessToken, user } = response.data;
         // login(user, accessToken);
@@ -38,12 +44,12 @@ export default function SignIn() {
       } else {
         throw new Error("Unexpected response status");
       }
-    }catch(error){
-      setError(error instanceof Error ? error.message : 'An error occurred');
-    }finally{
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 flex items-center justify-center p-4">
@@ -58,8 +64,12 @@ export default function SignIn() {
 
         <Card className="border-gray-200 shadow-lg">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
-            <CardDescription>Sign in to your account to continue monitoring</CardDescription>
+            <CardTitle className="text-2xl font-semibold">
+              Welcome back
+            </CardTitle>
+            <CardDescription>
+              Sign in to your account to continue monitoring
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -101,7 +111,11 @@ export default function SignIn() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -117,7 +131,10 @@ export default function SignIn() {
                     Remember me
                   </Label>
                 </div>
-                <Link href="/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-700">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-emerald-600 hover:text-emerald-700"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -131,18 +148,20 @@ export default function SignIn() {
               </Button>
             </form>
 
-            <div className="relative">
+            {/* <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-white px-2 text-gray-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" className="w-full bg-transparent">
-                <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                <svg className="!w-4 !h-4 mr-2" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -162,17 +181,35 @@ export default function SignIn() {
                 </svg>
                 Google
               </Button>
-              {/* <Button variant="outline" className="w-full bg-transparent">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+              <Button
+                variant="outline"
+                className="w-full bg-transparent flex items-center justify-center gap-2"
+                aria-label="Sign in with GitHub"
+              >
+                <svg
+                  className="!w-5 !h-5"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 2C6.477 2 2 6.484 2 12.02c0 4.427 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.009-.868-.013-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.157-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.528 2.341 1.087 2.91.831.091-.647.35-1.087.636-1.337-2.22-.253-4.555-1.113-4.555-4.953 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.269 2.75 1.026A9.564 9.564 0 0112 6.844c.852.004 1.71.115 2.51.337 1.909-1.295 2.748-1.026 2.748-1.026.546 1.379.202 2.397.099 2.65.64.7 1.028 1.595 1.028 2.688 0 3.85-2.338 4.697-4.566 4.946.359.309.678.92.678 1.854 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482C19.137 20.197 22 16.444 22 12.02 22 6.484 17.523 2 12 2z"
+                  />
                 </svg>
-                Twitter
-              </Button> */}
-            </div>
+
+                <span className="text-sm font-medium">GitHub</span>
+              </Button>
+            </div> */}
 
             <div className="text-center text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-emerald-600 hover:text-emerald-700 font-medium">
+              <Link
+                href="/signup"
+                className="text-emerald-600 hover:text-emerald-700 font-medium"
+              >
                 Sign up
               </Link>
             </div>
@@ -181,15 +218,21 @@ export default function SignIn() {
 
         <div className="text-center mt-6 text-xs text-gray-500">
           By signing in, you agree to our{" "}
-          <Link href="/terms" className="text-emerald-600 hover:text-emerald-700">
+          <Link
+            href="/terms"
+            className="text-emerald-600 hover:text-emerald-700"
+          >
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700">
+          <Link
+            href="/privacy"
+            className="text-emerald-600 hover:text-emerald-700"
+          >
             Privacy Policy
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

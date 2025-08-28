@@ -1,12 +1,9 @@
-import type { Request, Response } from "express";
-import dotenv from "dotenv";
+import type { NextFunction, Request, Response } from "express";
 import { prisma } from "store/client";
 
-dotenv.config();
-
-const getAllWebsites = async (req: Request, res: Response) => {
+const getAllWebsites = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user.id;
+        const userId = (req as any).user.id;
         const websites = await prisma.website.findMany({
             where: {
                 userId,
@@ -31,7 +28,7 @@ const getAllWebsites = async (req: Request, res: Response) => {
 
 const getWebsiteById = async (req: Request, res: Response) => {
     try {
-        const userId = req.user.id;
+        const userId = (req as any).user.id;
         const { id } = req.params;
 
         const website = await prisma.website.findFirst({
@@ -55,7 +52,7 @@ const getWebsiteById = async (req: Request, res: Response) => {
 
 const createWebsite = async (req: Request, res: Response) => {
     try {
-        const userId = req.user.id;
+        const userId = (req as any).user.id;
         const { url, name } = req.body;
 
         if (!url || !name) {
@@ -85,7 +82,7 @@ const createWebsite = async (req: Request, res: Response) => {
 
 const updateWebsiteById = async (req: Request, res: Response) => {
     try {
-        const userId = req.user.id;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const { url, name, monitorInterval, dormancyProtection, sslExpiryCheck } = req.body;
 
@@ -131,7 +128,7 @@ const updateWebsiteById = async (req: Request, res: Response) => {
 
 const deleteWebsiteById = async (req: Request, res: Response) => {
     try {
-        const userId = req.user.id;
+        const userId = (req as any).user.id;
         const { id } = req.params;
 
         const existingWebsite = await prisma.website.findFirst({

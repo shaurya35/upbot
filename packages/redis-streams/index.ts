@@ -1,6 +1,6 @@
 import { createClient } from "redis";
 
-const client = createClient({ url: process.env.REDIS_URL });
+export const client = createClient({ url: process.env.REDIS_URL });
 const CONSUMER_GROUP = "monitoring";
 
 let isConnected = false;
@@ -17,22 +17,23 @@ export const xAddBulk = async (jobs: any[]) => {
   const pipeline = client.multi();
   
   jobs.forEach(job => {
-    const stream = `upbot:region:${job.regionId}`;
+    const stream = `upbot:websites`;
     pipeline.xAdd(stream, "*", {
       id: job.id,
       url: job.url,
       userId: job.userId,
-      regionId: job.regionId,
-      monitorInterval: job.monitorInterval.toString()
+      regions: JSON.stringify(job.regions),
+      timeout: job.timeout.toString(),
+      monitorInterval: job.monitorInterval?.toString()
     });
   });
   
   await pipeline.exec();
 };
 
-export const xReadGroup = async (regionId: string, workerId: string) => {
+export const xReadGroup = async (workerId: string) => {
   await connect();
-  const stream = `upbot:region:${regionId}`;
+  const stream = `upbot:websites`;
   
   try {
     await client.xGroupCreate(stream, CONSUMER_GROUP, "0", { MKSTREAM: true });
@@ -67,18 +68,19 @@ export const xReadGroup = async (regionId: string, workerId: string) => {
       id: msg.message?.id,
       url: msg.message?.url,
       userId: msg.message?.userId,
-      regionId: msg.message?.regionId,
-      monitorInterval: parseInt(msg.message?.monitorInterval ?? "0", 10)
+      regions: JSON.parse(msg.message?.regions || "[]"), 
+      timeout: parseInt(msg.message?.timeout ?? "10000", 10),
+      monitorInterval: parseInt(msg.message?.monitorInterval ?? "60", 10)
     }
   }));
 };
 
-export const xAckBulk = async (regionId: string, messageIds: string[]) => {
+export const xAckBulk = async (messageIds: string[]) => {
   if (!messageIds.length) return;
   await connect();
   
   const pipeline = client.multi();
-  const stream = `upbot:region:${regionId}`;
+  const stream = `upbot:websites`;
   
   messageIds.forEach(id => {
     pipeline.xAck(stream, CONSUMER_GROUP, id);
@@ -87,9 +89,9 @@ export const xAckBulk = async (regionId: string, messageIds: string[]) => {
   await pipeline.exec();
 };
 
-export const claimPendingMessages = async (regionId: string, workerId: string) => {
+export const claimPendingMessages = async (workerId: string) => {
   await connect();
-  const stream = `upbot:region:${regionId}`;
+  const stream = `upbot:websites`;
   
   const pending = await client.xPendingRange(
     stream,
@@ -116,12 +118,17 @@ export const claimPendingMessages = async (regionId: string, workerId: string) =
         id: msg.message?.id,
         url: msg.message?.url,
         userId: msg.message?.userId,
-        regionId: msg.message?.regionId,
-        monitorInterval: parseInt(msg.message?.monitorInterval ?? "0", 10)
+        regions: JSON.parse(msg.message?.regions || "[]"), 
+        timeout: parseInt(msg.message?.timeout ?? "10000", 10),
+        monitorInterval: parseInt(msg.message?.monitorInterval ?? "60", 10)
       }
     }));
 };
 
 process.on("SIGINT", async () => {
+  await client.quit();
+});
+
+process.on("SIGTERM", async () => {
   await client.quit();
 });

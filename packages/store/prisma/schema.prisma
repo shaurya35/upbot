@@ -13,12 +13,13 @@ model User {
   email             String           @unique
   password          String?
   name              String?
+  company           String?
   plan              Plan             @default(FREE)
   signupMethod      String
+  accounts          OAuthAccount[] 
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   emailVerified     DateTime?
-  //add company name
   websites          Website[]
   alertChannels     AlertChannel[]
   statusPages       StatusPage[]
@@ -38,6 +39,19 @@ model OtpVerification {
   expiresAt         DateTime
   attempts          Int             @default(0)
   createdAt         DateTime        @default(now())
+}
+
+model OAuthAccount {
+  id             String    @id @default(uuid())
+  provider       String   
+  providerId     String    
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  accessToken    String?
+  refreshToken   String?
+  
+  @@unique([provider, providerId])
+  @@index([userId])
 }
 
 model Website {

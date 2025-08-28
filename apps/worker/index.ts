@@ -1,4 +1,3 @@
-import { createClient } from "redis";
 import { prisma } from "store/client";
 import {
   xReadGroup,
@@ -7,26 +6,21 @@ import {
 } from "redis-streams/client";
 import axios from "axios";
 
-const REDIS_URL = process.env.REDIS_URL;
 const WORKER_URL = process.env.WORKER_URL;
-const WORKER_ID = process.env.WORKER_ID;
+const WORKER_ID = process.env.WORKER_ID || `worker-${process.pid}`;
 
-if (!REDIS_URL || !WORKER_URL || !WORKER_ID) {
-  throw new Error("REDIS_URL, WORKER_URL and WORKER_ID must be set");
+if (!WORKER_URL) {
+  throw new Error("WORKER_URL must be set");
 }
 
-const redisClient = createClient({ url: REDIS_URL });
-
-redisClient.on("error", (err) => console.error("Redis Error:", err));
-
 async function callCloudflareWorker(payload: any) {
-  if (!WORKER_URL) {
-    throw new Error("WORKER_URL is required!");
+  if(!WORKER_URL){
+    throw new Error("WORKER_URL not set!")
   }
   const start = Date.now();
   try {
     const response = await axios.post(WORKER_URL, payload, {
-      timeout: 30000,
+      timeout: payload.timeout || 10000,
       validateStatus: (status) => status < 500,
     });
 
@@ -65,20 +59,23 @@ async function processBatch(messages: any[]) {
   for (const message of messages) {
     try {
       const payload = message.message;
+      console.log(`🔄 Processing website: ${payload.url} (${payload.id})`);
+
       const result = await callCloudflareWorker(payload);
 
       if (!result.success) {
         console.error(
-          `Cloudflare call failed for ${payload.id}:`,
+          `❌ Cloudflare call failed for ${payload.id}:`,
           result.error
         );
         continue;
       }
 
+      // Save checks to database
       for (const check of result.data.checks) {
         await prisma.check.create({
           data: {
-            websiteId: check.websiteId,
+            websiteId: check.websiteId || payload.id,
             regionId: check.regionId,
             status: check.status,
             responseTime: check.responseTime,
@@ -89,53 +86,53 @@ async function processBatch(messages: any[]) {
       }
 
       ackIds.push(message.id);
+      console.log(`✅ Processed website: ${payload.url}`);
     } catch (error) {
-      console.error(`Failed to process message:`, error);
+      console.error(`❌ Failed to process message:`, error);
     }
   }
 
   if (ackIds.length > 0) {
-    await xAckBulk("websites", ackIds);
+    await xAckBulk(ackIds);
+    console.log(`✅ Acknowledged ${ackIds.length} messages`);
   }
 }
 
 async function main() {
-  await redisClient.connect();
-
-  if (!WORKER_ID) {
-    throw new Error("WORKER_ID is required!");
-  }
-
+  console.log(`🚀 Worker started with ID: ${WORKER_ID}`);
+  
   while (true) {
     try {
-      const newMessages = await xReadGroup("websites", WORKER_ID);
-      const pendingMessages = await claimPendingMessages("websites", WORKER_ID);
+      const newMessages = await xReadGroup(WORKER_ID);
+      const pendingMessages = await claimPendingMessages(WORKER_ID);
 
       const allMessages = [...newMessages, ...pendingMessages];
 
       if (allMessages.length > 0) {
+        console.log(`📦 Processing ${allMessages.length} messages`);
         await processBatch(allMessages);
       } else {
+        // No messages, wait a bit before checking again
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (error) {
-      console.error(`Error:`, error);
+      console.error(`❌ Error in main loop:`, error);
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 }
 
 process.on("SIGINT", async () => {
-  await redisClient.quit();
+  console.log("🛑 Received SIGINT, shutting down...");
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  await redisClient.quit();
+  console.log("🛑 Received SIGTERM, shutting down...");
   process.exit(0);
 });
 
 main().catch((error) => {
-  console.error(`Fatal error:`, error);
+  console.error(`❌ Fatal error:`, error);
   process.exit(1);
 });

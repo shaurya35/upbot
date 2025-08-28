@@ -49,6 +49,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useProfile } from "@/contexts/ProfileProvider"
 import { useRouter } from "next/navigation"
 
 const websitesData = [
@@ -99,6 +100,21 @@ type FilterType = "down-first" | "up-first" | "a-z" | "newest-first"
 function AppSidebar() {
   const router = useRouter()
   const { setOpenMobile } = useSidebar()
+  const { profile, loading } = useProfile();
+
+  useEffect(()=> {
+    if(!loading && !profile){
+      router.replace("/signin");
+    }
+  },[profile, loading, router])
+
+  if (loading){
+    return <div>Loading...</div>
+  }
+
+  if(!profile){
+    return null;
+  }
 
   const handleNavigation = (path: string) => {
     router.push(path)
