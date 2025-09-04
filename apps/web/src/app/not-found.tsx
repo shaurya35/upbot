@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, Home, ArrowLeft } from "lucide-react";
+
+// Disable static generation for this page to avoid SSR context issues
+export const dynamic = 'force-dynamic';
 
 export default function NotFound() {
   return (
@@ -8,7 +9,7 @@ export default function NotFound() {
       <div className="max-w-md w-full text-center">
         {/* Icon */}
         <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertTriangle className="w-10 h-10 text-emerald-600" />
+          <span className="text-emerald-600 text-2xl">⚠️</span>
         </div>
 
         {/* Title */}
@@ -24,18 +25,18 @@ export default function NotFound() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-            <Link href="/">
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/dashboard">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Dashboard
-            </Link>
-          </Button>
+          <Link 
+            href="/"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-emerald-600 text-white hover:bg-emerald-700 h-10 px-4 py-2"
+          >
+            🏠 Go Home
+          </Link>
+          <Link 
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 h-10 px-4 py-2"
+          >
+            ← Dashboard
+          </Link>
         </div>
 
         {/* Footer */}
@@ -46,6 +47,7 @@ export default function NotFound() {
               href="https://x.com/_shaurya35" 
               className="text-emerald-600 hover:text-emerald-700 underline"
               target="_blank"
+              rel="noopener noreferrer"
             >
               contact support
             </Link>
