@@ -1,9 +1,32 @@
-# *
+# Upbot.space - Robots.txt
+# https://upbot.space/robots.txt
+
 User-agent: *
 Allow: /
 
+# Disallow admin/private areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /settings/
+
+# Allow important pages
+Allow: /
+Allow: /about
+Allow: /pricing
+Allow: /features
+Allow: /security
+Allow: /privacy
+Allow: /terms
+
+# Crawl delay
+Crawl-delay: 1
+
 # Host
-Host: https://www.upbot.space
+Host: https://upbot.space
 
 # Sitemaps
-Sitemap: https://www.upbot.space/sitemap.xml
+Sitemap: https://upbot.space/sitemap.xml
+Sitemap: https://upbot.space/sitemap-pages.xml
