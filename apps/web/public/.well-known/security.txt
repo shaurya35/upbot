@@ -1,0 +1,7 @@
+Contact: https://x.com/_shaurya35
+Contact: mailto:shaurya@upbot.space
+Expires: 2025-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://upbot.space/.well-known/security.txt
+Policy: https://upbot.space/security-policy
+Acknowledgments: https://upbot.space/security-acknowledgments

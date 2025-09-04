@@ -1,0 +1,43 @@
+# Humans.txt - The humans responsible & technology colophon
+
+# HUMANSTXT.ORG
+# The humans responsible for this website
+
+# TEAM
+    Creator: Shaurya Singh
+    Contact: shaurya [at] upbot.space
+    Twitter: @_shaurya35
+    Location: India
+
+# TECHNOLOGY COLOPHON
+
+    ## Frontend
+    Language: TypeScript
+    Framework: Next.js 15
+    UI Library: React 19
+    Styling: Tailwind CSS
+    Icons: Lucide React
+    Analytics: Vercel Analytics
+
+    ## Backend
+    Runtime: Node.js
+    Database: PostgreSQL
+    ORM: Prisma
+    Authentication: Clerk
+
+    ## Infrastructure
+    Hosting: Vercel
+    CDN: Cloudinary
+    Monitoring: Self-hosted Upbot
+
+    ## Tools
+    Package Manager: npm
+    Version Control: Git
+    Code Editor: VS Code
+    Design: Figma
+
+# VALUES
+    Performance: ⚡ Lightning fast monitoring
+    Simplicity: 🎯 Zero-config setup
+    Reliability: 🛡️ 99.9% uptime guarantee
+    Community: 💚 Always free for hobbyists

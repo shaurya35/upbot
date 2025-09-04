@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent } from "react";
-import Head from 'next/head';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,10 +78,6 @@ export default function Home() {
   };
 
   return (
-    <>
-    <Head>
-    <link rel="canonical" href="https://upbot.space/" />
-  </Head>
     <div className="flex flex-col min-h-screen bg-white">
       {/* Header - More Compact Mobile */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
@@ -945,6 +940,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-    </>
   );
 }
