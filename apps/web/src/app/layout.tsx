@@ -206,7 +206,6 @@ export default function RootLayout({
         <meta name="bingbot" content="index,follow" />
         <meta name="slurp" content="index,follow" />
         <meta name="duckduckbot" content="index,follow" />
-        <link rel="canonical" href="https://upbot.space" />
         
         {/* Additional SEO Meta Tags */}
         <meta name="language" content="English" />

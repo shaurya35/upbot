@@ -6,54 +6,10 @@
 
   <!-- Homepage -->
   <url>
-    <loc>https://upbot.space/</loc>
+    <loc>https://upbot.space</loc>
     <lastmod>2025-01-23T12:15:03+00:00</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-  </url>
-
-  <!-- Main Pages -->
-  <url>
-    <loc>https://upbot.space/features</loc>
-    <lastmod>2025-01-23T12:15:03+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://upbot.space/pricing</loc>
-    <lastmod>2025-01-23T12:15:03+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://upbot.space/about</loc>
-    <lastmod>2025-01-23T12:15:03+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- Legal Pages -->
-  <url>
-    <loc>https://upbot.space/privacy</loc>
-    <lastmod>2025-01-23T12:15:03+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://upbot.space/terms</loc>
-    <lastmod>2025-01-23T12:15:03+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://upbot.space/security</loc>
-    <lastmod>2025-01-23T12:15:03+00:00</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
   </url>
 
 </urlset>

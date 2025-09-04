@@ -12,15 +12,6 @@ Disallow: /dashboard/
 Disallow: /profile/
 Disallow: /settings/
 
-# Allow important pages
-Allow: /
-Allow: /about
-Allow: /pricing
-Allow: /features
-Allow: /security
-Allow: /privacy
-Allow: /terms
-
 # Crawl delay
 Crawl-delay: 1
 
@@ -29,4 +20,3 @@ Host: https://upbot.space
 
 # Sitemaps
 Sitemap: https://upbot.space/sitemap.xml
-Sitemap: https://upbot.space/sitemap-pages.xml
