@@ -122,20 +122,65 @@ const jsonLd = {
   "@type": "SoftwareApplication",
   name: "Upbot",
   description:
-    "Comprehensive uptime monitoring platform with global coverage and instant alerts",
+    "Comprehensive uptime monitoring platform with global coverage and instant alerts. Monitor websites from 15+ global locations with zero configuration required.",
   url: "https://upbot.space",
   applicationCategory: "Developer Tools",
   operatingSystem: "Web",
+  browserRequirements: "HTML5, JavaScript enabled",
+  downloadUrl: "https://upbot.space",
+  softwareVersion: "1.0",
+  releaseNotes: "Free uptime monitoring for hobbyists with global coverage",
+  screenshot: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+  author: {
+    "@type": "Person",
+    name: "Shaurya Singh",
+    url: "https://www.shauryacodes.me/",
+    sameAs: [
+      "https://twitter.com/_shaurya35",
+      "https://github.com/shaurya35"
+    ]
+  },
+  creator: {
+    "@type": "Person", 
+    name: "Shaurya Singh",
+    url: "https://www.shauryacodes.me/"
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "Upbot",
+    url: "https://upbot.space",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753263957/OpenGraph-embed-white-864x864_ydbsnk.png"
+    }
+  },
   offers: {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+    category: "Free tier"
   },
   aggregateRating: {
     "@type": "AggregateRating",
     ratingValue: "4.9",
     reviewCount: "500",
+    bestRating: "5",
+    worstRating: "1"
   },
+  featureList: [
+    "15+ Global monitoring locations",
+    "Instant email and SMS alerts", 
+    "Zero configuration setup",
+    "SSL certificate monitoring",
+    "Performance analytics",
+    "Downtime detection",
+    "Free for hobbyists",
+    "Enterprise-grade reliability"
+  ],
+  softwareRequirements: "Modern web browser",
+  memoryRequirements: "Minimal",
+  storageRequirements: "None - Cloud-based"
 };
 
 export default function RootLayout({
@@ -158,7 +203,30 @@ export default function RootLayout({
         <meta name="author" content="Shaurya Singh" />
         <meta name="robots" content="index,follow" />
         <meta name="googlebot" content="index,follow" />
+        <meta name="bingbot" content="index,follow" />
+        <meta name="slurp" content="index,follow" />
+        <meta name="duckduckbot" content="index,follow" />
         <link rel="canonical" href="https://upbot.space" />
+        
+        {/* Additional SEO Meta Tags */}
+        <meta name="language" content="English" />
+        <meta name="revisit-after" content="1 days" />
+        <meta name="distribution" content="global" />
+        <meta name="rating" content="general" />
+        <meta name="copyright" content="© 2025 Upbot. All rights reserved." />
+        
+        {/* Geographic Meta Tags */}
+        <meta name="geo.region" content="IN" />
+        <meta name="geo.placename" content="India" />
+        <meta name="ICBM" content="28.6139, 77.2090" />
+        
+        {/* Open Graph Additional */}
+        <meta property="og:see_also" content="https://www.shauryacodes.me/" />
+        <meta property="article:author" content="https://www.shauryacodes.me/" />
+        
+        {/* Twitter Additional */}
+        <meta name="twitter:domain" content="upbot.space" />
+        <meta name="twitter:url" content="https://upbot.space" />
         
         {/* Security & Performance */}
         <meta name="referrer" content="origin-when-cross-origin" />

@@ -19,7 +19,7 @@ export default function NotFound() {
 
         {/* Description */}
         <p className="text-slate-600 mb-8 leading-relaxed">
-          The page you're looking for doesn't exist or has been moved. Let's get you back to monitoring your websites.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved. Let&apos;s get you back to monitoring your websites.
         </p>
 
         {/* Actions */}
