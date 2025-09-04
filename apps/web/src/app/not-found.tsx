@@ -1,9 +1,28 @@
-import Link from "next/link";
+"use client";
 
-// Disable static generation for this page to avoid SSR context issues
-export const dynamic = 'force-dynamic';
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function NotFound() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Return a minimal fallback during SSR
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">404</h1>
+          <p className="mb-4">Page Not Found</p>
+          <a href="/" className="text-blue-600 hover:underline">Go Home</a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
