@@ -38,14 +38,14 @@ async function processDueWebsites() {
     for (const website of websites) {
       try {
         if (!processedWebsites.has(website.id)) {
-          console.log(`👋 New website added: ${website.url} (${website.id})`);
+          console.log(` New website added: ${website.url} (${website.id})`);
           processedWebsites.add(website.id);
         }
 
-        console.log(`🔄 Processing: ${website.url} (${website.id})`);
+        console.log(` Processing: ${website.url} (${website.id})`);
         
         const regions = getRegionsForPlan(website.userPlan);
-        console.log(`📍 Regions for ${website.url}: ${regions.map(r => r.code).join(', ')}`);
+        console.log(` Regions for ${website.url}: ${regions.map(r => r.code).join(', ')}`);
 
         const payload = {
           id: website.id,
@@ -60,7 +60,7 @@ async function processDueWebsites() {
         };
 
         payloads.push(payload);
-        console.log(`📦 Created payload for ${website.url}`);
+        console.log(` Created payload for ${website.url}`);
 
         const nextRun = now + (website.monitorInterval * 1000);
         const rescheduleValue = JSON.stringify({
@@ -73,7 +73,7 @@ async function processDueWebsites() {
           value: rescheduleValue,
         });
         
-        console.log(`⏰ Rescheduled ${website.url} for ${new Date(nextRun).toISOString()} (in ${website.monitorInterval}s)`);
+        console.log(` Rescheduled ${website.url} for ${new Date(nextRun).toISOString()} (in ${website.monitorInterval}s)`);
         upcomingReschedules.push({
           url: website.url,
           nextRun: new Date(nextRun).toISOString(),
@@ -88,30 +88,30 @@ async function processDueWebsites() {
     }
 
     if (payloads.length > 0) {
-      console.log(`📤 Adding ${payloads.length} payloads to Redis streams`);
+      console.log(` Adding ${payloads.length} payloads to Redis streams`);
       await xAddBulk(payloads);
-      console.log("✅ Successfully added payloads to streams");
+      console.log(" Successfully added payloads to streams");
     }
 
     await pipeline.exec();
     
     if (upcomingReschedules.length > 0) {
-      console.log("\n📋 Upcoming reschedules:");
+      console.log("\n Upcoming reschedules:");
       upcomingReschedules.forEach(rs => {
         console.log(`   - ${rs.url}: ${rs.nextRun} (every ${rs.interval}s)`);
       });
     }
     
-    console.log("✅ Pipeline executed successfully");
+    console.log(" Pipeline executed successfully");
     processingCycle++;
   } catch (error) {
-    console.error("❌ Processing error:", error);
+    console.error(" Processing error:", error);
   }
 }
 
 async function refreshWebsites() {
   try {
-    console.log("\n🔄 Refreshing websites from database...");
+    console.log("\n Refreshing websites from database...");
     const websites = await prisma.website.findMany({
       where: { deletedAt: null },
       include: {
@@ -129,7 +129,7 @@ async function refreshWebsites() {
     const newWebsites = websites.filter(w => !existingIds.has(w.id));
     
     if (newWebsites.length > 0) {
-      console.log(`📝 Found ${newWebsites.length} new websites`);
+      console.log(` Found ${newWebsites.length} new websites`);
       const pipeline = redisClient.multi();
       const now = Date.now();
 
@@ -156,25 +156,25 @@ async function refreshWebsites() {
           value: JSON.stringify(job),
         });
         
-        console.log(`⏰ Scheduled new website ${website.url} for ${new Date(nextRun).toISOString()}`);
+        console.log(` Scheduled new website ${website.url} for ${new Date(nextRun).toISOString()}`);
         console.log(`   Plan: ${job.userPlan}, Regions: ${job.regions.map(r => r.regionCode).join(', ')}`);
       }
 
       await pipeline.exec();
-      console.log("✅ New websites scheduled successfully");
+      console.log(" New websites scheduled successfully");
     } else {
-      console.log("✅ No new websites found");
+      console.log(" No new websites found");
     }
   } catch (error) {
-    console.error("❌ Error refreshing websites:", error);
+    console.error(" Error refreshing websites:", error);
   }
 }
 
 async function initScheduler() {
   try {
-    console.log("🚀 Initializing scheduler...");
+    console.log(" Initializing scheduler...");
     await redisClient.del(SCHEDULE_KEY);
-    console.log("🧹 Cleared existing schedule");
+    console.log(" Cleared existing schedule");
 
     const websites = await prisma.website.findMany({
       where: { deletedAt: null },
@@ -187,7 +187,7 @@ async function initScheduler() {
       },
     });
 
-    console.log(`📊 Fetched ${websites.length} websites from database`);
+    console.log(` Fetched ${websites.length} websites from database`);
 
     const jobs = websites.map((website) => {
       const regions = getRegionsForPlan(website.user.plan);
@@ -206,7 +206,7 @@ async function initScheduler() {
       };
     });
 
-    console.log(`🛠 Creating ${jobs.length} jobs`);
+    console.log(` Creating ${jobs.length} jobs`);
 
     const pipeline = redisClient.multi();
     const now = Date.now();
@@ -220,19 +220,19 @@ async function initScheduler() {
         value: JSON.stringify(job),
       });
       
-      console.log(`⏰ Scheduled ${job.url} with ${job.regions.length} regions for ${new Date(nextRun).toISOString()} (in ${Math.round(initialDelay/1000)}s)`);
+      console.log(` Scheduled ${job.url} with ${job.regions.length} regions for ${new Date(nextRun).toISOString()} (in ${Math.round(initialDelay/1000)}s)`);
       console.log(`   Plan: ${job.userPlan}, Regions: ${job.regions.map(r => r.regionCode).join(', ')}`);
     });
 
     await pipeline.exec();
-    console.log("✅ All jobs scheduled successfully");
+    console.log(" All jobs scheduled successfully");
 
     setTimeout(processDueWebsites, 1000);
     
     setInterval(processDueWebsites, CHECK_INTERVAL);
     setInterval(refreshWebsites, WEBSITE_REFRESH_INTERVAL);
-    console.log(`🔁 Started interval check every ${CHECK_INTERVAL}ms`);
-    console.log(`🔁 Started website refresh every ${WEBSITE_REFRESH_INTERVAL}ms`);
+    console.log(` Started interval check every ${CHECK_INTERVAL}ms`);
+    console.log(` Started website refresh every ${WEBSITE_REFRESH_INTERVAL}ms`);
   } catch (error) {
     console.error("❌ Initialization failed:", error);
     process.exit(1);
@@ -243,7 +243,7 @@ async function initialize() {
   try {
     console.log("🔌 Connecting to Redis...");
     await redisClient.connect();
-    console.log("✅ Connected to Redis");
+    console.log(" Connected to Redis");
     await initScheduler();
   } catch (error) {
     console.error("❌ Initialization failed:", error);
@@ -252,13 +252,13 @@ async function initialize() {
 }
 
 process.on("SIGINT", async () => {
-  console.log("🛑 Received SIGINT, shutting down...");
+  console.log(" Received SIGINT, shutting down...");
   await redisClient.quit();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("🛑 Received SIGTERM, shutting down...");
+  console.log(" Received SIGTERM, shutting down...");
   await redisClient.quit();
   process.exit(0);
 });

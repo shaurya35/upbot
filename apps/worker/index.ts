@@ -65,7 +65,7 @@ async function processBatch(messages: any[]) {
 
       if (!result.success) {
         console.error(
-          `❌ Cloudflare call failed for ${payload.id}:`,
+          ` Cloudflare call failed for ${payload.id}:`,
           result.error
         );
         continue;
@@ -86,20 +86,20 @@ async function processBatch(messages: any[]) {
       }
 
       ackIds.push(message.id);
-      console.log(`✅ Processed website: ${payload.url}`);
+      console.log(` Processed website: ${payload.url}`);
     } catch (error) {
-      console.error(`❌ Failed to process message:`, error);
+      console.error(` Failed to process message:`, error);
     }
   }
 
   if (ackIds.length > 0) {
     await xAckBulk(ackIds);
-    console.log(`✅ Acknowledged ${ackIds.length} messages`);
+    console.log(` Acknowledged ${ackIds.length} messages`);
   }
 }
 
 async function main() {
-  console.log(`🚀 Worker started with ID: ${WORKER_ID}`);
+  console.log(` Worker started with ID: ${WORKER_ID}`);
   
   while (true) {
     try {
@@ -109,30 +109,30 @@ async function main() {
       const allMessages = [...newMessages, ...pendingMessages];
 
       if (allMessages.length > 0) {
-        console.log(`📦 Processing ${allMessages.length} messages`);
+        console.log(` Processing ${allMessages.length} messages`);
         await processBatch(allMessages);
       } else {
         // No messages, wait a bit before checking again
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (error) {
-      console.error(`❌ Error in main loop:`, error);
+      console.error(` Error in main loop:`, error);
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 }
 
 process.on("SIGINT", async () => {
-  console.log("🛑 Received SIGINT, shutting down...");
+  console.log(" Received SIGINT, shutting down...");
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("🛑 Received SIGTERM, shutting down...");
+  console.log(" Received SIGTERM, shutting down...");
   process.exit(0);
 });
 
 main().catch((error) => {
-  console.error(`❌ Fatal error:`, error);
+  console.error(` Fatal error:`, error);
   process.exit(1);
 });

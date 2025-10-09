@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import { prisma } from "store/client";
 import { hash, compare } from "../../../helpers/bcrypt";
 import {
@@ -8,7 +8,7 @@ import {
 } from "../../../helpers/jwt";
 import { generateOtp, sendOtp, resendOtp } from "../../../helpers/otp";
 
-const signup = async (req: Request, res: Response, next: NextFunction) => {
+const signup = async (req: Request, res: Response) => {
   const { name, email, company, password } = req.body;
 
   if (!name || !email || !password) {
@@ -43,7 +43,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
+const verifyOtp = async (req: Request, res: Response) => {
   const { email, otp, password, name, company } = req.body;
 
   const otpRecord = await prisma.otpVerification.findUnique({
@@ -121,7 +121,6 @@ const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
 const resendOtpHandler = async (
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
   const { email } = req.body;
 
@@ -146,7 +145,7 @@ const resendOtpHandler = async (
   });
 };
 
-const signin = async (req: Request, res: Response, next: NextFunction) => {
+const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -189,7 +188,7 @@ const signin = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-const signout = (req: Request, res: Response, next: NextFunction) => {
+const signout = (req: Request, res: Response) => {
   res.clearCookie("refreshToken");
   res.status(200).json({ message: "Logged out successfully" });
 };
