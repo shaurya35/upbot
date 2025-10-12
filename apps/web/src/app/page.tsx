@@ -160,7 +160,7 @@ export default function Home() {
               </h1>
 
               <p className="mx-auto mb-6 sm:mb-12 max-w-2xl text-sm sm:text-lg md:text-xl text-slate-600 leading-normal px-1 sm:px-4 lg:px-0">
-                Monitor your websites from 7+ global locations with instant
+                Monitor your websites from 15+ global locations with instant
                 alerts, detailed analytics, and comprehensive downtime
                 reporting.
               </p>
@@ -294,7 +294,7 @@ export default function Home() {
                   <div className="flex items-center">
                     <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 mr-2 sm:mr-3 flex-shrink-0" />
                     <span className="text-xs sm:text-base text-slate-700">
-                      7+ global monitoring locations
+                      15+ global monitoring locations
                     </span>
                   </div>
                   <div className="flex items-center">
@@ -516,7 +516,7 @@ export default function Home() {
               </div>
               <div className="text-center">
                 <div className="text-xl sm:text-3xl md:text-4xl font-bold text-emerald-600 mb-1">
-                  7+
+                  15+
                 </div>
                 <div className="text-xs sm:text-sm text-slate-600">
                   Global Locations
