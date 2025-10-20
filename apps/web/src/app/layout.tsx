@@ -237,11 +237,11 @@ export default function RootLayout({
         <meta name="google-site-verification" content="your-google-verification-code" />
         
         {/* Icons */}
-        <link rel="icon" href="/favicon.ico" sizes="32x32" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="android-chrome-192x192" href="/android-chrome-192x192.png" />
-        <link rel="android-chrome-512x512" href="/android-chrome-512x512.png" />
+        {/* <link rel="icon" href="/favicon.ico" sizes="32x32" /> */}
+        {/* <link rel="icon" href="/favicon.svg" type="image/svg+xml" /> */}
+        {/* <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> */}
+        {/* <link rel="android-chrome-192x192" href="/android-chrome-192x192.png" /> */}
+        {/* <link rel="android-chrome-512x512" href="/android-chrome-512x512.png" /> */}
         
         {/* PWA & Mobile */}
         <meta name="theme-color" content="#059669" />
