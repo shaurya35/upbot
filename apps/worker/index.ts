@@ -22,7 +22,7 @@ async function callCloudflareWorker(payload: any) {
   const start = Date.now();
   try {
     const response = await axios.post(WORKER_URL, payload, {
-      timeout: payload.timeout || 30000, // 30 seconds for individual website checks
+      timeout: payload.timeout || 30000, 
       validateStatus: (status) => status < 500,
     });
 
@@ -59,19 +59,16 @@ async function processBatch(messages: any[]) {
   const ackIds: string[] = [];
   const allChecks: any[] = [];
 
-  // Limit batch size to prevent memory issues
   const messagesToProcess = messages.slice(0, MAX_BATCH_SIZE);
   if (messages.length > MAX_BATCH_SIZE) {
-    console.log(`⚠️  Batch size limited to ${MAX_BATCH_SIZE} (${messages.length - MAX_BATCH_SIZE} messages will be processed in next batch)`);
+    console.log(`Batch size limited to ${MAX_BATCH_SIZE} (${messages.length - MAX_BATCH_SIZE} messages will be processed in next batch)`);
   }
 
-  // Process all websites in parallel with simple long timeout
   const websitePromises = messagesToProcess.map(async (message) => {
     try {
       const payload = message.message;
-      console.log(`🔄 Processing website: ${payload.url} (${payload.id})`);
+      console.log(`Processing website: ${payload.url} (${payload.id})`);
 
-      // Simple timeout - only for truly stuck requests (1 hour default)
       const result = await Promise.race([
         callCloudflareWorker(payload),
         new Promise((_, reject) => 
@@ -81,13 +78,12 @@ async function processBatch(messages: any[]) {
 
       if (!result.success) {
         console.error(
-          ` Cloudflare call failed for ${payload.id}:`,
+          `Cloudflare call failed for ${payload.id}:`,
           result.error
         );
         return { messageId: message.id, checks: [] };
       }
 
-      // Collect checks for bulk insert
       const checks = result.data.checks.map((check: any) => ({
         websiteId: check.websiteId || payload.id,
         regionId: check.regionId,
@@ -97,18 +93,16 @@ async function processBatch(messages: any[]) {
         error: check.error,
       }));
 
-      console.log(` Processed website: ${payload.url} (${checks.length} checks)`);
+      console.log(`Processed website: ${payload.url} (${checks.length} checks)`);
       return { messageId: message.id, checks };
     } catch (error) {
-      console.error(` Failed to process message:`, error);
+      console.error(`Failed to process message:`, error);
       return { messageId: message.id, checks: [] };
     }
   });
 
-  // Wait for all website processing to complete
   const results = await Promise.all(websitePromises);
 
-  // Collect all checks and ack IDs
   for (const result of results) {
     allChecks.push(...result.checks);
     if (result.checks.length > 0) {
@@ -116,30 +110,27 @@ async function processBatch(messages: any[]) {
     }
   }
 
-  // Bulk insert all checks at once
   if (allChecks.length > 0) {
     try {
-      console.log(`💾 Bulk inserting ${allChecks.length} checks to database`);
+      console.log(`Bulk inserting ${allChecks.length} checks to database`);
       await prisma.check.createMany({
         data: allChecks,
-        skipDuplicates: true, // Skip duplicates if any
+        skipDuplicates: true, 
       });
-      console.log(`✅ Successfully inserted ${allChecks.length} checks`);
+      console.log(`Successfully inserted ${allChecks.length} checks`);
     } catch (error) {
-      console.error(`❌ Failed to bulk insert checks:`, error);
-      // If bulk insert fails, we still ack the messages to avoid reprocessing
-      // In production, you might want to implement retry logic or dead letter queue
+      console.error(`Failed to bulk insert checks:`, error);
     }
   }
 
   if (ackIds.length > 0) {
     await xAckBulk(ackIds);
-    console.log(` Acknowledged ${ackIds.length} messages`);
+    console.log(`Acknowledged ${ackIds.length} messages`);
   }
 }
 
 async function main() {
-  console.log(` Worker started with ID: ${WORKER_ID}`);
+  console.log(`Worker started with ID: ${WORKER_ID}`);
   
   while (true) {
     try {
@@ -149,13 +140,12 @@ async function main() {
       const allMessages = [...newMessages, ...pendingMessages];
 
       if (allMessages.length > 0) {
-        console.log(`📦 Processing ${allMessages.length} messages in batch`);
+        console.log(`Processing ${allMessages.length} messages in batch`);
         const startTime = Date.now();
         await processBatch(allMessages);
         const processingTime = Date.now() - startTime;
-        console.log(`⚡ Batch processed in ${processingTime}ms (${Math.round(allMessages.length / (processingTime / 1000))} websites/sec)`);
+        console.log(`Batch processed in ${processingTime}ms (${Math.round(allMessages.length / (processingTime / 1000))} websites/sec)`);
       } else {
-        // No messages, wait a bit before checking again
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (error) {
