@@ -81,7 +81,8 @@ export const metadata: Metadata = {
     siteName: "Upbot",
     images: [
       {
-        url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+        // url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+        url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
         width: 1200,
         height: 630,
         alt: "Upbot — Free uptime monitoring platform with global coverage",
@@ -98,7 +99,8 @@ export const metadata: Metadata = {
     description:
       "Go live in under 30s. Monitor from 15+ global locations. Always free for hobbyists—no fees, ever.",
     images: [
-      "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+      // "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+      "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
     ],
     creator: "@_shaurya35",
     site: "@_shaurya35",
@@ -130,7 +132,8 @@ const jsonLd = {
   downloadUrl: "https://upbot.space",
   softwareVersion: "1.0",
   releaseNotes: "Free uptime monitoring for hobbyists with global coverage",
-  screenshot: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+  // screenshot: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
+  screenshot: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
   author: {
     "@type": "Person",
     name: "Shaurya Singh",
@@ -151,7 +154,8 @@ const jsonLd = {
     url: "https://upbot.space",
     logo: {
       "@type": "ImageObject",
-      url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753263957/OpenGraph-embed-white-864x864_ydbsnk.png"
+      // url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753263957/OpenGraph-embed-white-864x864_ydbsnk.png"
+      url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png"
     }
   },
   offers: {
