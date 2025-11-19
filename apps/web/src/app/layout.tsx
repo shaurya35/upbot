@@ -85,7 +85,7 @@ export const metadata: Metadata = {
         url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
         width: 1200,
         height: 630,
-        alt: "Upbot — Free uptime monitoring platform with global coverage",
+        alt: "Upbot- Free uptime monitoring platform with global coverage",
       },
     ],
     locale: "en_US",
@@ -241,8 +241,8 @@ export default function RootLayout({
         <meta name="google-site-verification" content="your-google-verification-code" />
         
         {/* Icons */}
-        {/* <link rel="icon" href="/favicon.ico" sizes="32x32" /> */}
-        {/* <link rel="icon" href="/favicon.svg" type="image/svg+xml" /> */}
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         {/* <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> */}
         {/* <link rel="android-chrome-192x192" href="/android-chrome-192x192.png" /> */}
         {/* <link rel="android-chrome-512x512" href="/android-chrome-512x512.png" /> */}
