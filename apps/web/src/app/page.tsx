@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent, useRef } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -241,15 +242,26 @@ export default function Home() {
           <div className="flex h-14 sm:h-16 items-center justify-between max-w-7xl mx-auto">
             <Link
               href="/"
-              className="flex items-center space-x-2 group"
+              className="flex items-center space-x-1 sm:space-x-2 group"
               aria-label="Upbot Home"
             >
-              <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-emerald-600 group-hover:bg-emerald-700 transition-colors duration-200">
+              {/* <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl overflow-hidden transition-transform duration-200 group-hover:scale-105">
+                <Image
+                  src="/icons/image.svg"
+                  alt="Upbot Logo"
+                  width={90}
+                  height={90}
+                  className="w-full h-full object-contain"
+                  priority
+                />
+              </div>  */}
+              {/* Previous icon */}
+               <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-emerald-600 group-hover:bg-emerald-700 transition-colors duration-200">
                 <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <span className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 Upbot
-              </span>
+              </span> 
             </Link>
             <nav className="hidden md:flex items-center space-x-6">
               <Button

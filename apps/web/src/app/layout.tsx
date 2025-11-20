@@ -267,7 +267,7 @@ export default function RootLayout({
         <link rel="author" href="/humans.txt" />
 
         {/* https://app.ahrefs.com/ analytics  */}
-        <script src="https://analytics.ahrefs.com/analytics.js" data-key="I9918vQBJeWMi++51KD3wQ" async></script>
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="ZlJ5yrlDKvyolJ2XC0OPqA" async></script>
       </head>
 
       <body
