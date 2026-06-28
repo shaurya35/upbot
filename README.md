@@ -1,6 +1,6 @@
 # Upbot
 
-> Distributed uptime monitoring — check your sites from 15+ global regions, get alerted the moment they go down, and watch latency trends in real time.
+> Distributed uptime monitoring. Check your sites from 15+ global regions, get alerted the moment they go down, and watch latency trends in real time.
 
 Upbot pings your endpoints from Cloudflare's edge network across regions like Dublin, Sydney, Frankfurt, São Paulo, Dubai and more, fans the work out through a Redis Streams queue, and streams results back to a live dashboard. It's built as a Turborepo monorepo so the scheduler, queue, edge checkers, API and UI each stay independent and independently deployable.
 
@@ -39,10 +39,10 @@ A single server pinging every site on a timer doesn't scale and can't tell you w
 
 | Path | What it is |
 |------|------------|
-| `apps/pusher` | Scheduler/producer — selects regions per plan and enqueues checks onto Redis Streams |
-| `apps/worker` | Consumer-group worker — batches jobs, calls the edge workers, persists results |
+| `apps/pusher` | Scheduler/producer that selects regions per plan and enqueues checks onto Redis Streams |
+| `apps/worker` | Consumer-group worker that batches jobs, calls the edge workers, and persists results |
 | `apps/cfworkers` | Cloudflare Workers that perform the multi-region HTTP checks (Vitest tests) |
-| `apps/server` | Express REST API — `auth`, `profile`, `website`, `alert`, `check`, `team` (v1) |
+| `apps/server` | Express REST API: `auth`, `profile`, `website`, `alert`, `check`, `team` (v1) |
 | `apps/web` | Next.js 15 dashboard (React 19, Recharts, Tailwind 4) |
 | `apps/client` | Next.js 15 front-end app |
 | `apps/tests` | Cross-cutting integration tests |
@@ -53,20 +53,20 @@ A single server pinging every site on a timer doesn't scale and can't tell you w
 
 ## Tech stack
 
-**Languages/runtime:** TypeScript, Bun, Node ≥18
+**Languages/runtime:** TypeScript, Bun, Node >=18
 **Backend:** Express, Prisma + PostgreSQL, Redis Streams, Cloudflare Workers
 **Frontend:** Next.js 15, React 19, Tailwind CSS 4, Recharts
 **Tooling:** Turborepo, Bun workspaces, ESLint, Prettier, Vitest
 
 ## Getting started
 
-**Prerequisites:** [Bun](https://bun.sh) ≥ 1.1, PostgreSQL, Redis, and (for edge checks) a Cloudflare account + Wrangler.
+**Prerequisites:** [Bun](https://bun.sh) >= 1.1, PostgreSQL, Redis, and (for edge checks) a Cloudflare account + Wrangler.
 
 ```bash
 # 1. Install
 bun install
 
-# 2. Configure env — copy the example in each app that has one
+# 2. Configure env. Copy the example in each app that has one
 cp apps/server/.env.example apps/server/.env
 cp apps/worker/.env.example apps/worker/.env
 cp apps/pusher/.env.example apps/pusher/.env
@@ -94,11 +94,10 @@ bun run dev
 ## Useful scripts
 
 ```bash
-bun run dev          # turbo run dev — all apps
+bun run dev          # turbo run dev (all apps)
 bun run build        # turbo run build
 bun run lint         # turbo run lint
 bun run check-types  # turbo run check-types
-bun run test         # turbo run test (e.g. cfworkers via Vitest)
 bun run format       # prettier
 ```
 
