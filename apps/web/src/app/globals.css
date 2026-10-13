@@ -24,7 +24,6 @@
   --font-geist-sans: "Geist Sans", "Inter", "Segoe UI", "Arial", sans-serif;
   --font-geist-mono: "Geist Mono", "Menlo", "Monaco", "Consolas", monospace;
 
-  /* Enhanced Color System - Emerald Palette */
   --emerald-50: #ecfdf5;
   --emerald-100: #d1fae5;
   --emerald-200: #a7f3d0;
@@ -36,7 +35,6 @@
   --emerald-800: #065f46;
   --emerald-900: #064e3b;
 
-  /* Shadow System */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -45,21 +43,19 @@
   --shadow-emerald: 0 10px 40px -10px rgb(16 185 129 / 0.3);
   --shadow-emerald-lg: 0 20px 60px -15px rgb(16 185 129 / 0.4);
 
-  /* Spacing System (8px base) */
-  --spacing-1: 0.25rem; /* 4px */
-  --spacing-2: 0.5rem; /* 8px */
-  --spacing-3: 0.75rem; /* 12px */
-  --spacing-4: 1rem; /* 16px */
-  --spacing-5: 1.25rem; /* 20px */
-  --spacing-6: 1.5rem; /* 24px */
-  --spacing-8: 2rem; /* 32px */
-  --spacing-10: 2.5rem; /* 40px */
-  --spacing-12: 3rem; /* 48px */
-  --spacing-16: 4rem; /* 64px */
-  --spacing-20: 5rem; /* 80px */
-  --spacing-24: 6rem; /* 96px */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
 
-  /* Border Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -67,7 +63,6 @@
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -95,7 +90,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Typography Utilities */
 .text-fluid-xs {
   font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
 }
@@ -136,7 +130,6 @@ html {
   font-size: clamp(3.75rem, 3rem + 3.75vw, 6rem);
 }
 
-/* Global Status Box Animations */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -190,7 +183,6 @@ html {
   }
 }
 
-/* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

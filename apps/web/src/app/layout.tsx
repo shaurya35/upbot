@@ -16,7 +16,6 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  // Basic SEO Meta Tags
   title: {
     default: "Upbot · Free Uptime Monitoring Platform",
     template: "%s | Upbot",
@@ -53,7 +52,6 @@ export const metadata: Metadata = {
   publisher: "Upbot",
   category: "Developer Tools",
   
-  // Technical SEO
   metadataBase: new URL("https://upbot.space"),
   alternates: {
     canonical: "/",
@@ -72,7 +70,6 @@ export const metadata: Metadata = {
     },
   },
 
-  // Open Graph / Social Media
   openGraph: {
     title: "Upbot · Free Uptime Monitoring Made Simple",
     description:
@@ -81,7 +78,6 @@ export const metadata: Metadata = {
     siteName: "Upbot",
     images: [
       {
-        // url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
         url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
         width: 1200,
         height: 630,
@@ -92,24 +88,20 @@ export const metadata: Metadata = {
     type: "website",
   },
 
-  // Twitter Card
   twitter: {
     card: "summary_large_image",
     title: "Upbot · Free Uptime Monitoring Made Simple",
     description:
-      "Go live in under 30s. Monitor from 15+ global locations. Always free for hobbyists—no fees, ever.",
+      "Go live in under 30s. Monitor from 15+ global locations. Always free for hobbyists. No fees, ever.",
     images: [
-      // "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
       "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
     ],
     creator: "@_shaurya35",
     site: "@_shaurya35",
   },
 
-  // PWA Manifest
   manifest: "/manifest.json",
 
-  // Additional SEO
   applicationName: "Upbot",
   referrer: "origin-when-cross-origin",
   formatDetection: {
@@ -132,7 +124,6 @@ const jsonLd = {
   downloadUrl: "https://upbot.space",
   softwareVersion: "1.0",
   releaseNotes: "Free uptime monitoring for hobbyists with global coverage",
-  // screenshot: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753265738/1200x630_yuxhnq.png",
   screenshot: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png",
   author: {
     "@type": "Person",
@@ -154,7 +145,6 @@ const jsonLd = {
     url: "https://upbot.space",
     logo: {
       "@type": "ImageObject",
-      // url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1753263957/OpenGraph-embed-white-864x864_ydbsnk.png"
       url: "https://res.cloudinary.com/dkjsi6iwm/image/upload/v1761439833/ChatGPT_Image_Jul_24_2025_02_50_26_PM_mp70sx.png"
     }
   },
@@ -195,7 +185,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* SEO Meta Tags */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -211,43 +200,32 @@ export default function RootLayout({
         <meta name="slurp" content="index,follow" />
         <meta name="duckduckbot" content="index,follow" />
         
-        {/* Additional SEO Meta Tags */}
         <meta name="language" content="English" />
         <meta name="revisit-after" content="1 days" />
         <meta name="distribution" content="global" />
         <meta name="rating" content="general" />
         <meta name="copyright" content="© 2025 Upbot. All rights reserved." />
         
-        {/* Geographic Meta Tags */}
         <meta name="geo.region" content="IN" />
         <meta name="geo.placename" content="India" />
         <meta name="ICBM" content="28.6139, 77.2090" />
         
-        {/* Open Graph Additional */}
         <meta property="og:see_also" content="https://www.shauryacodes.me/" />
         <meta property="article:author" content="https://www.shauryacodes.me/" />
         
-        {/* Twitter Additional */}
         <meta name="twitter:domain" content="upbot.space" />
         <meta name="twitter:url" content="https://upbot.space" />
         
-        {/* Security & Performance */}
         <meta name="referrer" content="origin-when-cross-origin" />
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         
-        {/* Verification Meta Tags */}
         <meta name="google-site-verification" content="your-google-verification-code" />
         
-        {/* Icons */}
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        {/* <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> */}
-        {/* <link rel="android-chrome-192x192" href="/android-chrome-192x192.png" /> */}
-        {/* <link rel="android-chrome-512x512" href="/android-chrome-512x512.png" /> */}
         
-        {/* PWA & Mobile */}
         <meta name="theme-color" content="#059669" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -257,16 +235,13 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <link rel="manifest" href="/manifest.json" />
 
-        {/* Performance Optimizations */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
-        {/* Humans.txt */}
         <link rel="author" href="/humans.txt" />
 
-        {/* https://app.ahrefs.com/ analytics  */}
         <script src="https://analytics.ahrefs.com/analytics.js" data-key="ZlJ5yrlDKvyolJ2XC0OPqA" async></script>
       </head>
 

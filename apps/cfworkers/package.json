@@ -4,15 +4,16 @@
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
+		"dev": "wrangler dev --port 8787 --show-interactive-dev-session=false",
+		"start": "wrangler dev --port 8787 --show-interactive-dev-session=false",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"check-types": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
-		"wrangler": "^4.31.0"
+		"wrangler": "^4.150.0"
 	}
 }

@@ -1,8 +1,6 @@
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveMx } from "node:dns/promises";
-
-const prisma = new PrismaClient();
 
 async function domainHasMx(domain: string) {
   try {

@@ -197,6 +197,16 @@ export default function Home() {
     });
   };
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const ctaLabel = appUrl ? "Get Started" : "Join Waitlist";
+  const handleCta = () => {
+    if (appUrl) {
+      window.location.href = `${appUrl}/signup`;
+    } else {
+      scrollToTop();
+    }
+  };
+
   const handleWaitlistSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateEmail(email)) return;
@@ -245,17 +255,6 @@ export default function Home() {
               className="flex items-center space-x-1 sm:space-x-2 group"
               aria-label="Upbot Home"
             >
-              {/* <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl overflow-hidden transition-transform duration-200 group-hover:scale-105">
-                <Image
-                  src="/icons/image.svg"
-                  alt="Upbot Logo"
-                  width={90}
-                  height={90}
-                  className="w-full h-full object-contain"
-                  priority
-                />
-              </div>  */}
-              {/* Previous icon */}
                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-emerald-600 group-hover:bg-emerald-700 transition-colors duration-200">
                 <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
@@ -267,9 +266,9 @@ export default function Home() {
               <Button
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 hover:scale-105 active:scale-95"
-                onClick={scrollToTop}
+                onClick={handleCta}
               >
-                Join Waitlist
+                {ctaLabel}
               </Button>
             </nav>
             <Button
@@ -295,10 +294,10 @@ export default function Home() {
                   className="w-full bg-emerald-600 hover:bg-emerald-700"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    scrollToTop();
+                    handleCta();
                   }}
                 >
-                  Join Waitlist
+                  {ctaLabel}
                 </Button>
               </div>
             </div>
@@ -436,7 +435,6 @@ export default function Home() {
                   </div>
                 </form>
 
-                {/* Waitlist Counter */}
                 <div className="mt-4 sm:mt-6 flex items-center justify-center space-x-2">
                   {isLoadingCount ? (
                     <div className="flex items-center space-x-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-4 py-2">
@@ -662,7 +660,7 @@ export default function Home() {
                                   : undefined,
                               }}
                             >
-                              {animatedValue > 0 ? `${animatedValue}ms` : "—"}
+                              {animatedValue > 0 ? `${animatedValue}ms` : "-"}
                             </span>
                           </div>
                         );
@@ -769,16 +767,15 @@ export default function Home() {
                 </p>
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/25 w-full sm:w-auto text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
-                  onClick={scrollToTop}
+                  onClick={handleCta}
                 >
-                  Join Waitlist
+                  {ctaLabel}
                   <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </div>
             </div>
           </div>
         </section>
-
 
         <section
           ref={(el) => {
@@ -827,7 +824,7 @@ export default function Home() {
               {[
                 {
                   quote:
-                    "Set up in under 30 seconds and it just works. Finally, monitoring that doesn't get in the way—only alerts when it matters.",
+                    "Set up in under 30 seconds and it just works. Finally, monitoring that doesn't get in the way. Only alerts when it matters.",
                   author: "Dev Tester",
                   role: "Internal QA, Upbot",
                   badge: "From the Dev Team",
@@ -836,7 +833,7 @@ export default function Home() {
                 },
                 {
                   quote:
-                    "The interface is so clean and intuitive, I felt confident shipping it right away. No more alert fatigue—just actionable notifications.",
+                    "The interface is so clean and intuitive, I felt confident shipping it right away. No more alert fatigue, just actionable notifications.",
                   author: "Siddharth",
                   role: "Community Member",
                   badge: "Early Community",
@@ -933,9 +930,9 @@ export default function Home() {
                   <Button
                     size="lg"
                     className="bg-white text-emerald-600 hover:bg-emerald-50 hover:shadow-xl hover:shadow-white/20 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold w-full sm:w-auto transition-all duration-200 hover:scale-105 active:scale-95"
-                    onClick={scrollToTop}
+                    onClick={handleCta}
                   >
-                    Join Waitlist
+                    {ctaLabel}
                     <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </div>
@@ -1028,7 +1025,7 @@ export default function Home() {
                 links: [
                   { label: "Home", href: "#", external: false },
                   { label: "Features", href: "#", external: false },
-                  { label: "Join Waitlist", href: "#", external: false, onClick: scrollToTop },
+                  { label: ctaLabel, href: "#", external: false, onClick: handleCta },
                 ],
               },
               {

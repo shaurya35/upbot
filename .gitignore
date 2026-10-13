@@ -36,3 +36,10 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Local interview preparation notes
+/docs/upbot-pusher-notes.md
+/docs/upbot-architecture-decisions.md
+
+# Local pusher workflow diagrams and examples
+/docs/pusher-workflow/

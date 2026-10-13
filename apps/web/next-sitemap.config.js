@@ -1,6 +1,6 @@
 module.exports = {
   siteUrl: 'https://upbot.space',
-  generateRobotsTxt: false, // We have a custom robots.txt
+  generateRobotsTxt: false,
   outDir: './public',
   sourceDir: 'src/app',
   changefreq: 'daily',
