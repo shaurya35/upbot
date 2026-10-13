@@ -1,109 +1,95 @@
 "use client";
 
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-} from "react";
-import {
-  getAuthStateSSR,
-  getTokenExpiration,
-} from "@/lib/auth";
-import { BACKEND_URL } from "@/configs/env";
-import axios from "axios"
+  authApi,
+  refreshSession,
+  setAccessToken,
+  setSessionExpiredHandler,
+  type Session,
+  type User,
+} from "@/lib/api";
 
-const AuthContext = createContext(null);
+type AuthContextValue = {
+  user: User | null;
+  loading: boolean;
+  login: (session: Session) => void;
+  logout: () => Promise<void>;
+  setUser: (user: User) => void;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+const refreshDelay = (token: string) => {
+  try {
+    const { exp } = jwtDecode<{ exp?: number }>(token);
+    return exp ? Math.max(exp * 1000 - Date.now() - 30_000, 0) : null;
+  } catch {
+    return null;
+  }
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [accessToken, setAccessToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearAuth = () => {
+  const clearAuth = useCallback(() => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
     setAccessToken(null);
     setUser(null);
-    console.log("Auth Reset!")
-  }
-
-  const logout = async () => {
-    try {
-      await axios.post(`${BACKEND_URL}/api/v1/auth/logout`, {
-        withCredentials: true,
-      });
-    } catch (error) {
-      console.log("Failed to logout - backend:", error);
-    }
-    clearAuth();
-  };
-
-  const scheduleTokenRefresh = async (token: string) => {
-    const exp = getTokenExpiration(token);
-    if (exp === null) {
-      console.warn("Token expiration could not be determined.");
-      return;
-    }
-    const now = Date.now();
-    const delay = exp - now - 5000;
-
-    if (delay > 0) {
-      setTimeout(async () => {
-        try {
-          const data = await getAuthStateSSR();
-          if (data) {
-            setAccessToken(data.accessToken);
-            setUser(data.user);
-          } else {
-            console.warn("Token refresh failed, resetting auth!");
-            clearAuth();
-          }
-        } catch (err) {
-          console.error("Token refresh error:", err);
-          clearAuth()
-        }
-      }, delay);
-    }
-  };
-
-  const initAuth = async () => {
-    setLoading(true);
-    try {
-      const data = await getAuthStateSSR();
-      if (!data) {
-        throw new Error("AuthProvider - initAuth Error");
-      }
-      setAccessToken(data.accessToken);
-      setUser(data.user);
-      scheduleTokenRefresh(data.accessToken);
-    } catch (error) {
-      console.log("Auth init Error:", error);
-      clearAuth();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    initAuth();
   }, []);
 
-  const value = {
-    user, 
-    accessToken,
-    logout,
-    loading,
-  }
+  const applySession = useCallback(
+    (session: Session) => {
+      setAccessToken(session.accessToken);
+      setUser(session.user);
+
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+      const delay = refreshDelay(session.accessToken);
+      if (delay !== null) {
+        refreshTimer.current = setTimeout(async () => {
+          const next = await refreshSession();
+          if (next) applySession(next);
+          else clearAuth();
+        }, delay);
+      }
+    },
+    [clearAuth]
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await authApi.signout();
+    } catch (error) {
+      console.log("Failed to sign out on the server:", error);
+    }
+    clearAuth();
+  }, [clearAuth]);
+
+  useEffect(() => {
+    setSessionExpiredHandler(clearAuth);
+    refreshSession()
+      .then((session) => (session ? applySession(session) : clearAuth()))
+      .finally(() => setLoading(false));
+
+    return () => {
+      setSessionExpiredHandler(null);
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
+  }, [applySession, clearAuth]);
 
   return (
-    <AuthContext.Provider value={value as any}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading, login: applySession, logout, setUser }}>
+      {children}
     </AuthContext.Provider>
-  )
+  );
 };
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined || context === null) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;

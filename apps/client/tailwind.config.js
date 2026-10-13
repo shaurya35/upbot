@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 const SIDEBAR_WIDTH = "14rem"
 const SIDEBAR_WIDTH_MOBILE = "16rem"
 

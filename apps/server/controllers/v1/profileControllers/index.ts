@@ -1,37 +1,12 @@
 import type { Request, Response } from "express";
-import { decodeToken } from "../../../helpers/jwt";
 import { prisma } from "store/client";
+import { publicUserSelect } from "../authControllers";
 
 const getProfile = async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-        return res.status(401).json({ message: "Refresh token missing" });
-    }
-
     try {
-        const data = decodeToken(refreshToken);
-        if (!data) {
-            return res.status(403).json({ message: "Invalid refresh token" });
-        }
-
-        let userId: string | undefined;
-        if (typeof data === "string") {
-            return res.status(403).json({ message: "Invalid refresh token" });
-        } else if ("userId" in data && (typeof data.userId === "string" || typeof data.userId === "number")) {
-            userId = String(data.userId);
-        } else {
-            return res.status(403).json({ message: "Invalid refresh token" });
-        }
-
         const user = await prisma.user.findFirst({
-            where: { id: userId },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                plan: true,
-                signupMethod: true,
-            },
+            where: { id: (req as any).user.id, deletedAt: null },
+            select: publicUserSelect,
         });
 
         if (!user) {
@@ -40,8 +15,36 @@ const getProfile = async (req: Request, res: Response) => {
 
         return res.status(200).json({ profile: user });
     } catch (error) {
-        return res.status(403).json({ message: "Invalid refresh token" });
+        console.error(error);
+        return res.status(500).json({ message: "Failed to fetch profile" });
     }
 };
 
-export { getProfile }
+const updateProfile = async (req: Request, res: Response) => {
+    try {
+        const { name, company } = req.body;
+
+        if (name !== undefined && (typeof name !== "string" || !name.trim())) {
+            return res.status(400).json({ message: "Name cannot be empty" });
+        }
+        if (company !== undefined && company !== null && typeof company !== "string") {
+            return res.status(400).json({ message: "Company must be a string" });
+        }
+
+        const user = await prisma.user.update({
+            where: { id: (req as any).user.id },
+            data: {
+                ...(name !== undefined && { name: name.trim() }),
+                ...(company !== undefined && { company: company?.trim() || null }),
+            },
+            select: publicUserSelect,
+        });
+
+        return res.status(200).json({ profile: user });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to update profile" });
+    }
+};
+
+export { getProfile, updateProfile };
