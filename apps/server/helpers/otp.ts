@@ -7,6 +7,14 @@ const generateOtp = () => {
 };
 
 const sendOtp = async (email: string, otp: string) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("EMAIL_USER and EMAIL_PASS must be set to send OTP emails");
+    }
+    console.log(`[dev] OTP for ${email}: ${otp} (set EMAIL_USER/EMAIL_PASS to send real emails)`);
+    return;
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -35,7 +43,7 @@ const sendOtp = async (email: string, otp: string) => {
           <hr style="border: none; border-top: 1px solid #ccc;" />
   
           <p style="font-size: 12px; color: #999; margin-top: 20px;">
-            You received this email because you requested a confirmation code from <strong>ITER Connect</strong>.
+            You received this email because you requested a confirmation code from <strong>Upbot</strong>.
           </p>
         </div>
       `,

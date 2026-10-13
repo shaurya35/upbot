@@ -4,12 +4,38 @@ import { hash, compare } from "../../../helpers/bcrypt";
 import {
   generateAccessToken,
   generateRefreshToken,
-  refreshAccessToken,
+  decodeToken,
 } from "../../../helpers/jwt";
 import { generateOtp, sendOtp, resendOtp } from "../../../helpers/otp";
 
+const normalizeEmail = (email: unknown) =>
+  typeof email === "string" ? email.trim().toLowerCase() : "";
+
+const publicUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  company: true,
+  signupMethod: true,
+} as const;
+
+const toPublicUser = (user: {
+  id: string;
+  email: string;
+  name: string | null;
+  company: string | null;
+  signupMethod: string;
+}) => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  company: user.company,
+  signupMethod: user.signupMethod,
+});
+
 const signup = async (req: Request, res: Response) => {
-  const { name, email, company, password } = req.body;
+  const { name, password } = req.body;
+  const email = normalizeEmail(req.body.email);
 
   if (!name || !email || !password) {
     return res
@@ -18,7 +44,7 @@ const signup = async (req: Request, res: Response) => {
   }
 
   const existingUser = await prisma.user.findFirst({
-    where: { email: email.toLowerCase() },
+    where: { email },
   });
 
   if (existingUser) {
@@ -44,7 +70,14 @@ const signup = async (req: Request, res: Response) => {
 };
 
 const verifyOtp = async (req: Request, res: Response) => {
-  const { email, otp, password, name, company } = req.body;
+  const { otp, password, name, company } = req.body;
+  const email = normalizeEmail(req.body.email);
+
+  if (!email || !otp || !password || !name) {
+    return res
+      .status(400)
+      .json({ message: "Email, OTP, name and password are required!" });
+  }
 
   const otpRecord = await prisma.otpVerification.findUnique({
     where: { email },
@@ -64,7 +97,7 @@ const verifyOtp = async (req: Request, res: Response) => {
     return res.status(429).json({ message: "Too many failed attempts" });
   }
 
-  if (otpRecord.otp !== otp) {
+  if (otpRecord.otp !== String(otp)) {
     await prisma.otpVerification.update({
       where: { email },
       data: { attempts: { increment: 1 } },
@@ -78,12 +111,11 @@ const verifyOtp = async (req: Request, res: Response) => {
 
   const hashedPassword = await hash(password);
   const userData: any = {
-    email: email.toLowerCase(),
+    email,
     password: hashedPassword,
     name,
     signupMethod: "email",
-    plan: "FREE",
-    emailVerified: true,
+    emailVerified: new Date(),
   };
 
   if (company) {
@@ -109,12 +141,7 @@ const verifyOtp = async (req: Request, res: Response) => {
   res.status(201).json({
     message: "User created successfully",
     accessToken,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      plan: user.plan,
-    },
+    user: toPublicUser(user),
   });
 };
 
@@ -122,14 +149,14 @@ const resendOtpHandler = async (
   req: Request,
   res: Response,
 ) => {
-  const { email } = req.body;
+  const email = normalizeEmail(req.body.email);
 
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
 
   const existingUser = await prisma.user.findFirst({
-    where: { email: email.toLowerCase() },
+    where: { email },
   });
 
   if (existingUser) {
@@ -146,7 +173,8 @@ const resendOtpHandler = async (
 };
 
 const signin = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = normalizeEmail(req.body.email);
 
   if (!email || !password) {
     return res
@@ -155,7 +183,7 @@ const signin = async (req: Request, res: Response) => {
   }
 
   const user = await prisma.user.findFirst({
-    where: { email: email.toLowerCase() },
+    where: { email, deletedAt: null },
   });
 
   if (!user || !user.password) {
@@ -179,12 +207,7 @@ const signin = async (req: Request, res: Response) => {
 
   res.json({
     accessToken,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      plan: user.plan,
-    },
+    user: toPublicUser(user),
   });
 };
 
@@ -193,7 +216,7 @@ const signout = (req: Request, res: Response) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-const refreshTokenHandler = (
+const refreshTokenHandler = async (
   req: Request,
   res: Response,
 ) => {
@@ -202,15 +225,26 @@ const refreshTokenHandler = (
     return res.status(401).json({ message: "Refresh token missing" });
   }
 
-  try {
-    const newAccessToken = refreshAccessToken(refreshToken);
-    res.status(200).json({ accessToken: newAccessToken });
-  } catch (error) {
+  const decoded = decodeToken(refreshToken);
+  if (!decoded || typeof decoded === "string" || typeof decoded.userId !== "string") {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
+
+  const user = await prisma.user.findFirst({
+    where: { id: decoded.userId, deletedAt: null },
+    select: publicUserSelect,
+  });
+
+  if (!user) {
+    return res.status(403).json({ message: "Invalid refresh token" });
+  }
+
+  res.status(200).json({ accessToken: generateAccessToken(user), user });
 };
 
 export {
+  publicUserSelect,
+  toPublicUser,
   signup,
   verifyOtp,
   resendOtpHandler,

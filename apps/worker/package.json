@@ -11,7 +11,12 @@
   },
   "dependencies": {
     "axios": "^1.11.0",
-    "redis": "^5.8.2",
-    "redis-streams": "^1.1.0"
+    "redis-streams": "*",
+    "store": "*"
+  },
+  "scripts": {
+    "dev": "bun --watch --env-file=../../.env index.ts",
+    "start": "bun --env-file=../../.env index.ts",
+    "check-types": "tsc --noEmit"
   }
 }

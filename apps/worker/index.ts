@@ -3,13 +3,15 @@ import {
   xReadGroup,
   xAckBulk,
   claimPendingMessages,
+  disconnect,
 } from "redis-streams/client";
 import axios from "axios";
 
 const WORKER_URL = process.env.WORKER_URL;
 const WORKER_ID = process.env.WORKER_ID || `worker-${process.pid}`;
-const MAX_BATCH_SIZE = parseInt(process.env.MAX_BATCH_SIZE || "50"); 
-const WEBSITE_TIMEOUT = parseInt(process.env.WEBSITE_TIMEOUT || "3600000");
+const CLOUDFLARE_TIMEOUT_MARGIN = parseInt(process.env.CLOUDFLARE_TIMEOUT_MARGIN || "10000");
+const DEFAULT_CHECK_TIMEOUT = 10000;
+const WORKER_SECRET = process.env.WORKER_SECRET;
 
 if (!WORKER_URL) {
   throw new Error("WORKER_URL must be set");
@@ -22,9 +24,17 @@ async function callCloudflareWorker(payload: any) {
   const start = Date.now();
   try {
     const response = await axios.post(WORKER_URL, payload, {
-      timeout: payload.timeout || 30000, 
-      validateStatus: (status) => status < 500,
+      timeout: (payload.timeout || DEFAULT_CHECK_TIMEOUT) + CLOUDFLARE_TIMEOUT_MARGIN,
+      headers: WORKER_SECRET ? { "X-Upbot-Secret": WORKER_SECRET } : undefined,
     });
+
+    if (!Array.isArray(response.data?.checks)) {
+      return {
+        success: false,
+        error: "Cloudflare worker response is missing checks",
+        responseTime: Date.now() - start,
+      };
+    }
 
     return {
       success: true,
@@ -59,22 +69,12 @@ async function processBatch(messages: any[]) {
   const ackIds: string[] = [];
   const allChecks: any[] = [];
 
-  const messagesToProcess = messages.slice(0, MAX_BATCH_SIZE);
-  if (messages.length > MAX_BATCH_SIZE) {
-    console.log(`Batch size limited to ${MAX_BATCH_SIZE} (${messages.length - MAX_BATCH_SIZE} messages will be processed in next batch)`);
-  }
-
-  const websitePromises = messagesToProcess.map(async (message) => {
+  const websitePromises = messages.map(async (message) => {
     try {
       const payload = message.message;
       console.log(`Processing website: ${payload.url} (${payload.id})`);
 
-      const result = await Promise.race([
-        callCloudflareWorker(payload),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Website processing timeout (1 hour)')), WEBSITE_TIMEOUT)
-        )
-      ]) as any;
+      const result = await callCloudflareWorker(payload);
 
       if (!result.success) {
         console.error(
@@ -84,7 +84,7 @@ async function processBatch(messages: any[]) {
         return { messageId: message.id, checks: [] };
       }
 
-      const checks = result.data.checks.map((check: any) => ({
+      const checks = result.data!.checks.map((check: any) => ({
         websiteId: check.websiteId || payload.id,
         regionId: check.regionId,
         status: check.status,
@@ -155,15 +155,18 @@ async function main() {
   }
 }
 
-process.on("SIGINT", async () => {
-  console.log(" Received SIGINT, shutting down...");
-  process.exit(0);
-});
+let shuttingDown = false;
 
-process.on("SIGTERM", async () => {
-  console.log(" Received SIGTERM, shutting down...");
+async function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}, shutting down...`);
+  await Promise.allSettled([disconnect(), prisma.$disconnect()]);
   process.exit(0);
-});
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 main().catch((error) => {
   console.error(` Fatal error:`, error);

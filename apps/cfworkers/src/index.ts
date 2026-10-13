@@ -75,17 +75,22 @@ async function performCheck(
 	return result;
 }
 
+type CheckerEnv = {
+	CHECK_SECRET?: string;
+};
+
+function timingSafeEqual(a: string, b: string): boolean {
+	const encoder = new TextEncoder();
+	const left = encoder.encode(a);
+	const right = encoder.encode(b);
+	if (left.byteLength !== right.byteLength) return false;
+	return crypto.subtle.timingSafeEqual(left, right);
+}
+
 export default {
-	async fetch(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
-		if (request.method === 'OPTIONS') {
-			return new Response(null, {
-				headers: {
-					'Access-Control-Allow-Origin': '*',
-					'Access-Control-Allow-Methods': 'POST',
-					'Access-Control-Allow-Headers': 'Content-Type',
-					'Access-Control-Max-Age': '86400',
-				},
-			});
+	async fetch(request: Request, env: CheckerEnv, ctx: ExecutionContext): Promise<Response> {
+		if (env.CHECK_SECRET && !timingSafeEqual(request.headers.get('X-Upbot-Secret') ?? '', env.CHECK_SECRET)) {
+			return jsonResponse({ error: 'Unauthorized' }, 401);
 		}
 
 		if (request.method !== 'POST') {
@@ -138,7 +143,7 @@ export default {
 			checks,
 		});
 	},
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<CheckerEnv>;
 
 function jsonResponse(data: unknown, status = 200, headers?: HeadersInit): Response {
 	return new Response(JSON.stringify(data), {
@@ -146,7 +151,6 @@ function jsonResponse(data: unknown, status = 200, headers?: HeadersInit): Respo
 		headers: {
 			'Content-Type': 'application/json',
 			'Cache-Control': 'no-store, max-age=0',
-			'Access-Control-Allow-Origin': '*',
 			...headers,
 		},
 	});

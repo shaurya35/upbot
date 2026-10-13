@@ -16,14 +16,6 @@ const generateAccessToken = (user: any) => {
   );
 };
 
-const refreshAccessToken = (refreshToken: string) => {
-  const decoded = jwt.verify(
-    refreshToken,
-    process.env.JWT_REFRESH_SECRET as string
-  ) as any;
-  return generateAccessToken({ id: decoded.userId, email: decoded.email });
-};
-
 const decodeToken = (token: string) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET as string);
@@ -33,4 +25,4 @@ const decodeToken = (token: string) => {
   }
 };
 
-export { generateAccessToken, generateRefreshToken, refreshAccessToken, decodeToken };
+export { generateAccessToken, generateRefreshToken, decodeToken };

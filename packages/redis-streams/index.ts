@@ -125,10 +125,9 @@ export const claimPendingMessages = async (workerId: string) => {
     }));
 };
 
-process.on("SIGINT", async () => {
-  await client.quit();
-});
-
-process.on("SIGTERM", async () => {
-  await client.quit();
-});
+export const disconnect = async () => {
+  if (client.isOpen) {
+    await client.quit();
+  }
+  isConnected = false;
+};

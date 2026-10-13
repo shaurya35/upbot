@@ -6,13 +6,14 @@ import {
   updateAlertChannelById,
   deleteAlertChannelById,
 } from "../../../controllers/v1/alertControllers/alertControllers";
+import { isLoggedIn } from "../../../middlewares/auth";
 
 const router = express.Router();
 
-router.get("/", getAllAlertChannels);
-router.get("/:id", getAlertChannelById);
-router.post("/", createAlertChannel);
-router.put("/:id", updateAlertChannelById);
-router.delete("/:id", deleteAlertChannelById);
+router.get("/", isLoggedIn, getAllAlertChannels);
+router.get("/:id", isLoggedIn, getAlertChannelById);
+router.post("/", isLoggedIn, createAlertChannel);
+router.put("/:id", isLoggedIn, updateAlertChannelById);
+router.delete("/:id", isLoggedIn, deleteAlertChannelById);
 
 export default router;
