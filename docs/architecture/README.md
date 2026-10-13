@@ -38,7 +38,7 @@ sequenceDiagram
     participant C as Cloudflare Worker
     participant T as Target website
 
-    P->>DB: Load active websites and user plans
+    P->>DB: Load active websites
     DB-->>P: Website settings
     P->>S: Store jobs scored by next check time
     loop Every five seconds
@@ -63,21 +63,21 @@ sequenceDiagram
 
 ## Scheduling
 
-The pusher keeps the next check time in the Redis sorted set `upbot:schedule`. The score is a timestamp in milliseconds. The member is a JSON string containing the website settings and plan.
+The pusher keeps the next check time in the Redis sorted set `upbot:schedule`. The score is a timestamp in milliseconds. The member is a JSON string containing the website settings and regions.
 
 At startup, the pusher deletes the schedule key and rebuilds it from active websites. It spreads initial check times across each website's interval using a random delay.
 
 Every five seconds, it reads members whose score is at or below the current time. It publishes their jobs, then writes their next check times. `monitorInterval` is stored in seconds and converted to milliseconds when computing the next run.
 
-A separate five-minute refresh adds websites that are not already in the schedule. It currently does not update existing entries or remove deleted websites.
+A separate refresh (every `WEBSITE_REFRESH_INTERVAL`, five minutes by default) adds websites that are not already in the schedule. It currently does not update existing entries or remove deleted websites.
 
-Code: [pusher](../../apps/pusher/index.ts), [plan and region configuration](../../apps/pusher/region.config.ts).
+Code: [pusher](../../apps/pusher/index.ts), [region configuration](../../packages/store/regions.ts).
 
 ## Queue contract
 
 All website jobs use one Redis Stream, `upbot:websites`. Workers share the `monitoring` consumer group. Each job contains a list of requested regions; the pusher does not publish a separate stream message for each region.
 
-Example of a decoded job for a free-plan website:
+Example of a decoded job with `MONITOR_REGIONS=SFO`:
 
 ```json
 {
@@ -145,24 +145,22 @@ The next step is to acknowledge only after a successful write and define a uniqu
 
 ### Schedule updates
 
-The five-minute refresh only adds new websites. Changes to an existing website's interval, URL, or user plan are not copied into its schedule entry. Soft-deleted websites can remain scheduled until the pusher restarts.
+The periodic refresh only adds new websites. Changes to an existing website's interval or URL are not copied into its schedule entry. Soft-deleted websites can remain scheduled until the pusher restarts.
 
 Schedule members are full JSON strings. Changing that string creates a different sorted-set member, so updates need to remove the previous member or use stable website IDs with settings stored separately.
 
 ### Regional execution
 
-The pusher chooses region metadata from the user's plan, and the Cloudflare code passes a `colo` field to `fetch`. This is not a verified mechanism for choosing where each request executes. Region labels in stored results should not be used as proof of geographic coverage.
+The pusher attaches the regions configured in `MONITOR_REGIONS`, and the Cloudflare code passes a `colo` field to `fetch`. This is not a verified mechanism for choosing where each request executes. Region labels in stored results should not be used as proof of geographic coverage.
 
 Cloudflare documents `request.cf.colo` as information about the data center handling an incoming request. It is not listed as a supported outgoing `RequestInit.cf` placement option. See the [Cloudflare Request documentation](https://developers.cloudflare.com/workers/runtime-apis/request/).
 
-The plan configuration also lists `TYO`, but `ALL_REGIONS` has no matching entry. Database region IDs must match the fixed IDs used by the pusher.
+Region IDs come from `packages/store/regions.ts`, which both the pusher and the seed script use.
 
 ### Product integration and tests
 
-The dashboard's website list and monitoring charts use sample data. Check routes are present but not mounted, and team routes are disabled. Alert channel handlers expect an authenticated user, but their router does not attach the authentication middleware.
+The dashboard reads live data from the API: per-website status and 24h uptime, time-bucketed uptime and response time (`/website/:id/stats`), and recent checks.
 
-Email OTP delivery exists. Incident detection and monitoring alert delivery are separate features that still need implementation. Public status pages and billing have database models but no complete service flow.
+Email OTP delivery exists. Incident detection and monitoring alert delivery are separate features that still need implementation. Alert channels can be configured from the dashboard but are not used yet.
 
-The OTP account creation code also assigns a boolean to `emailVerified`, while the Prisma schema defines it as `DateTime?`. That path needs to be aligned with the schema and tested.
-
-The current test files do not validate this pipeline: API tests reference an old route and catch request failures, while Cloudflare tests still expect the starter `Hello World!` response. Useful coverage would verify job encoding, scheduler updates, failed-write recovery, retry deduplication, and the checker's request and response contract.
+The current test files do not validate this pipeline: there is no API test suite, and Cloudflare tests still expect the starter `Hello World!` response. Useful coverage would verify job encoding, scheduler updates, failed-write recovery, retry deduplication, and the checker's request and response contract.

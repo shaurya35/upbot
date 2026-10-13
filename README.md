@@ -27,7 +27,7 @@ The monitoring backend is the main implementation. The dashboard has sample moni
 
 1. The API stores a website and its monitoring settings in PostgreSQL.
 2. The pusher reads active websites and adds them to `upbot:schedule`. Each entry is scored by its next check time.
-3. Every five seconds, the pusher reads due entries, selects region metadata from the user's plan, and writes one job per website to `upbot:websites`.
+3. Every five seconds, the pusher reads due entries, attaches the regions from `MONITOR_REGIONS`, and writes one job per website to `upbot:websites`.
 4. Workers read jobs through the `monitoring` consumer group. They also claim messages that have been pending for at least 30 seconds.
 5. Each worker sends jobs to the Cloudflare Worker, which checks the target URL once for each requested region entry.
 6. The worker collects the results, attempts a bulk insert into PostgreSQL, and acknowledges messages that returned checks.
@@ -50,11 +50,8 @@ This original sketch follows the scheduler and worker functions. The [architectu
 | [`apps/server`](apps/server)                                                                                   | Express API for authentication, profiles, websites, and alert channel configuration. |
 | [`apps/client`](apps/client)                                                                                   | Next.js dashboard, account screens, and monitoring UI.                               |
 | [`apps/web`](apps/web)                                                                                         | Landing page and waitlist, with its own Prisma schema.                               |
-| [`apps/tests`](apps/tests)                                                                                     | Early API integration tests.                                                         |
 | [`packages/redis-streams`](packages/redis-streams)                                                             | Shared stream publishing, consumption, acknowledgement, and recovery functions.      |
 | [`packages/store`](packages/store)                                                                             | Monitoring database schema and shared Prisma client.                                 |
-| [`packages/ui`](packages/ui)                                                                                   | Shared React components.                                                             |
-| [`packages/eslint-config`](packages/eslint-config), [`packages/typescript-config`](packages/typescript-config) | Shared lint and TypeScript settings.                                                 |
 | [`docs/architecture`](docs/architecture)                                                                       | Diagrams, editable sources, and architecture notes.                                  |
 
 ## Stack
@@ -71,125 +68,68 @@ This original sketch follows the scheduler and worker functions. The [architectu
 
 ## Local setup
 
-You need Bun, Node.js for the Next.js apps, PostgreSQL, and Redis. A Cloudflare account is needed to deploy the HTTP checker. You can run it locally with Wrangler first.
-
-Use a dedicated development database and Redis instance. The pusher rebuilds `upbot:schedule` when it starts.
-
-### 1. Install dependencies
+You need [Bun](https://bun.sh) 1.2+ and [Docker](https://www.docker.com/products/docker-desktop/) (for Postgres and Redis). Then, from the repository root:
 
 ```bash
-git clone https://github.com/shaurya35/upbot.git
-cd upbot
 bun install
+bun run dev
 ```
 
-### 2. Configure the services
+`bun run dev` does everything:
+
+1. Creates `.env` from `.env.example` on first run and generates the JWT secrets.
+2. Starts Postgres and Redis with `docker compose`, unless they are already reachable at `DATABASE_URL` and `REDIS_URL`.
+3. Generates the Prisma client, syncs the schema and seeds the regions.
+4. Starts every service with Turborepo:
+
+| Service                 | URL                     |
+| ----------------------- | ----------------------- |
+| Dashboard               | <http://localhost:3000> |
+| Landing page            | <http://localhost:3001> |
+| API                     | <http://localhost:8080> |
+| HTTP checker (Wrangler) | <http://localhost:8787> |
+| Pusher (scheduler)      | no port                 |
+| Worker (queue consumer) | no port                 |
+
+Open <http://localhost:3000>, sign up, and add a website. Without `EMAIL_USER`/`EMAIL_PASS`, the signup code is printed in the API log (`[dev] OTP for ...`) instead of emailed. New websites are picked up within `WEBSITE_REFRESH_INTERVAL` (15 seconds in development), and their first checks appear on the dashboard shortly after.
+
+Other commands:
 
 ```bash
-cp packages/store/.env.example packages/store/.env
-cp apps/pusher/.env.example apps/pusher/.env
-cp apps/worker/.env.example apps/worker/.env
-cp apps/server/.env.example apps/server/.env
+bun run db:setup       # Only the setup steps (env, Postgres/Redis, schema, seed)
+bun run db:push        # Apply schema changes to the database
+bun run services:down  # Stop the Postgres and Redis containers (data is kept in Docker volumes)
 ```
 
-Fill in the following values. Some example files contain only part of the configuration, so use this table as the reference.
+### Configuration
 
-| File                  | Variables                                                                                                                           |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/store/.env` | `DATABASE_URL` for the monitoring database.                                                                                         |
-| `apps/pusher/.env`    | `REDIS_URL`. The schedule key is currently fixed in code.                                                                           |
-| `apps/worker/.env`    | `REDIS_URL`, `WORKER_URL`, and an optional `WORKER_ID` that is unique to each consumer.                                             |
-| `apps/server/.env`    | `PORT=8080`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `EMAIL_USER`, and `EMAIL_PASS`. Email credentials are used for Gmail OTP delivery. |
-| `apps/client/.env`    | `NEXT_PUBLIC_BACKEND_URL=http://localhost:8080`. Create this file manually.                                                         |
+All services read the single root `.env`. See `.env.example` for every variable. The ones you are most likely to change:
 
-The service commands below also load `packages/store/.env`, so they share the monitoring database connection. If a service file also sets `DATABASE_URL`, keep it pointed at the same database. Pusher and worker must use the same Redis instance.
+| Variable                      | Purpose                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `DATABASE_URL`, `REDIS_URL`   | Use your own Postgres or Redis instead of the Docker containers.        |
+| `MONITOR_REGIONS`             | Comma-separated region codes from `packages/store/regions.ts`.          |
+| `EMAIL_USER`, `EMAIL_PASS`    | Gmail account for OTP emails. Required when `NODE_ENV=production`.      |
+| `ALLOWED_ORIGINS`             | Dashboard origins allowed by the API's CORS policy.                     |
+| `WEB_DATABASE_URL`            | Landing page waitlist database. Never point it at `DATABASE_URL`.       |
+| `NEXT_PUBLIC_APP_URL`         | Dashboard URL for the landing page buttons. Unset in production.        |
+| `WORKER_URL`, `WORKER_SECRET` | Where the worker sends checks, and the checker's shared secret.         |
 
-### 3. Prepare a new development database
+The landing page in `apps/web` uses its own database (`WEB_DATABASE_URL`, a separate `upbot_web` database locally). In development, `NEXT_PUBLIC_APP_URL` points its buttons at the dashboard's signup page. Leave it unset in production to keep the waitlist.
 
-The monitoring schema is in `packages/store/prisma/schema.prisma`. The landing page schema in `apps/web/prisma` is separate.
-
-```bash
-cd packages/store
-bunx prisma generate
-bunx prisma db push
-cd ../..
-```
-
-These commands are for a new development database. For an existing database, review schema differences before applying changes.
-
-The pusher uses fixed region IDs from `apps/pusher/region.config.ts`. Insert those same IDs into a new database so check results can reference them:
-
-```bash
-bun --env-file=packages/store/.env -e '
-import { prisma } from "./packages/store/index.ts";
-import { ALL_REGIONS } from "./apps/pusher/region.config.ts";
-
-try {
-  await prisma.region.createMany({
-    data: ALL_REGIONS,
-    skipDuplicates: true,
-  });
-} finally {
-  await prisma.$disconnect();
-}
-'
-```
-
-The existing `seed.ts` uses different region codes, and `seed.sql` creates random IDs. Neither matches the pusher's fixed IDs. If you already have region rows, compare them with `region.config.ts` before running the pipeline.
-
-### 4. Start the HTTP checker
-
-Run this from the repository root in its own terminal:
-
-```bash
-bun run --cwd apps/cfworkers dev
-```
-
-Set `WORKER_URL` in `apps/worker/.env` to the local URL printed by Wrangler, usually `http://localhost:8787`.
-
-To use a deployed checker instead:
+### Deploying the HTTP checker
 
 ```bash
 bun run --cwd apps/cfworkers deploy
 ```
 
-Set `WORKER_URL` to the deployed URL printed by Wrangler.
-
-### 5. Start the API, scheduler, worker, and dashboard
-
-Run each command from the repository root in a separate terminal:
+Set `WORKER_URL` to the deployed URL printed by Wrangler. A deployed checker should require a shared secret so it can't be used as an open proxy:
 
 ```bash
-# API
-bun --env-file=packages/store/.env --env-file=apps/server/.env apps/server/index.ts
-
-# Scheduler
-bun --env-file=packages/store/.env --env-file=apps/pusher/.env apps/pusher/index.ts
-
-# Queue consumer
-bun --env-file=packages/store/.env --env-file=apps/worker/.env apps/worker/index.ts
-
-# Dashboard
-bun run --cwd apps/client dev --port 3000
+cd apps/cfworkers && bunx wrangler secret put CHECK_SECRET
 ```
 
-Open the dashboard at `http://localhost:3000`. The API currently allows that browser origin through CORS.
-
-The root `bun run dev` starts workspaces that define a `dev` script. The API, pusher, and worker currently have no such scripts, so start them explicitly as shown above.
-
-### 6. Check the API
-
-```bash
-curl http://localhost:8080/health
-```
-
-Expected response:
-
-```json
-{ "message": "Health Check!" }
-```
-
-This confirms that the API is running. To verify the monitoring pipeline, create a website through the API and check for new `Check` rows in PostgreSQL. New websites are picked up by the scheduler's five-minute refresh, then run according to their interval.
+Put the same value in `WORKER_SECRET` in `.env`.
 
 ## API
 
@@ -198,14 +138,19 @@ This confirms that the API is running. To verify the monitoring pipeline, create
 | `GET`                  | `/health`                 | API health response.                               |
 | `POST`                 | `/api/v1/auth/signup`     | Request an email verification code.                |
 | `POST`                 | `/api/v1/auth/verify-otp` | Verify the code and create an account.             |
+| `POST`                 | `/api/v1/auth/resend-otp` | Send a new verification code.                      |
 | `POST`                 | `/api/v1/auth/signin`     | Sign in and receive an access token.               |
 | `POST`                 | `/api/v1/auth/refresh`    | Refresh the access token using the refresh cookie. |
 | `POST`                 | `/api/v1/auth/signout`    | Clear the refresh cookie.                          |
-| `POST`                 | `/api/v1/profile`         | Read the profile using the refresh cookie.         |
+| `GET`, `PUT`           | `/api/v1/profile`         | Read or update the signed-in user's profile.       |
 | `GET`, `POST`          | `/api/v1/website`         | List or create websites.                           |
 | `GET`, `PUT`, `DELETE` | `/api/v1/website/:id`     | Read, update, or soft-delete a website.            |
+| `GET`                  | `/api/v1/website/:id/stats?range=24h\|7d\|30d` | Uptime and response-time buckets for charts. |
+| `GET`                  | `/api/v1/website/:id/checks?limit=50` | Most recent check results.             |
+| `GET`, `POST`          | `/api/v1/alert`           | List or create alert channels.                     |
+| `GET`, `PUT`, `DELETE` | `/api/v1/alert/:id`       | Read, update, or deactivate an alert channel.      |
 
-Website routes require `Authorization: Bearer <access-token>`. For example:
+Website, alert and profile routes require `Authorization: Bearer <access-token>`. For example:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/website \
@@ -214,17 +159,14 @@ curl -X POST http://localhost:8080/api/v1/website \
   -d '{"name":"Example","url":"https://example.com"}'
 ```
 
-Alert channel routes are mounted at `/api/v1/alert`, but their authentication middleware still needs to be connected. Check history routes exist in source but are not mounted by the server. Team routes are also disabled.
-
 ## Development status
 
 The repository contains the monitoring pipeline and the product UI. It still needs work before a complete hosted monitoring service:
 
-- **Dashboard:** website lists and charts use sample data. Live check history needs API integration.
 - **Monitoring reliability:** database failures can still be followed by queue acknowledgements. Schedule refresh also needs to handle edits and deleted websites.
 - **Regional checks:** region metadata is configured, but execution from each requested location needs a verified routing design.
-- **Product features:** incident detection, alert delivery, public status pages, team access, and billing remain planned or partially scaffolded.
-- **Tests:** the API tests reference an old `/api/v1/ping` route, and the Cloudflare tests still expect `Hello World!`. They need to be updated to cover the current behavior.
+- **Product features:** incident detection and alert delivery are not built yet. Alert channels can be saved but nothing sends to them.
+- **Tests:** there is no API test suite yet, and the Cloudflare tests still expect the starter `Hello World!` response.
 
 See the [architecture notes](docs/architecture/README.md) for the exact limits and the next engineering steps.
 
@@ -233,7 +175,7 @@ See the [architecture notes](docs/architecture/README.md) for the exact limits a
 ```bash
 bun run build        # Build workspaces that define a build script
 bun run lint         # Lint workspaces that define a lint script
-bun run check-types  # Run available workspace type checks
+bun run check-types  # Type-check every workspace
 bun run format       # Format TypeScript, TSX, and Markdown files
 ```
 

@@ -40,8 +40,8 @@ A naive `setInterval` loop on one server fails both: it checks from a single loc
 **Why:** Pulling and dispatching checks in batches amortizes per-message overhead and lets one worker keep many in-flight HTTP requests busy. Per-call timeouts (`WEBSITE_TIMEOUT`) bound the blast radius of any single hung target.
 **Tradeoff:** Larger batches raise throughput but also the cost of a worker dying mid-batch (more messages to reclaim). 50 is a starting point to tune against real load.
 
-### 5. Plan-aware region selection (`getRegionsForPlan`)
-**Why:** Region fan-out is the main cost driver. Tying the number/choice of regions to the user's plan keeps cost proportional to value and makes the product tiers meaningful.
+### 5. Configured region set (`MONITOR_REGIONS`)
+**Why:** Region fan-out is the main cost driver. Upbot is open source with no paid tiers, so the operator picks the regions every website is checked from (`MONITOR_REGIONS`, defined in `packages/store/regions.ts`).
 
 ## Failure modes considered
 
@@ -55,6 +55,5 @@ A naive `setInterval` loop on one server fails both: it checks from a single loc
 
 ## Known limitations / next steps
 
-- **Test coverage is uneven.** `cfworkers` has Vitest tests and there's an integration `tests` app; the server controllers are the priority gap to close next.
-- **Team routes** are scaffolded but disabled pending authz work.
+- **Test coverage is thin.** `cfworkers` has starter Vitest tests; the server controllers are the priority gap to close next.
 - No distributed tracing yet; structured logs are the current observability surface.
