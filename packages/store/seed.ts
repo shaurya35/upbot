@@ -1,29 +1,21 @@
-import { prisma } from "store/client";
+import { prisma } from "./index";
+import { ALL_REGIONS } from "./regions";
 
 async function seedRegions() {
-  const regions = [
-    { code: "us-east", name: "US East (Virginia)", provider: "CLOUDFLARE" },
-    { code: "eu-west", name: "EU West (London)", provider: "CLOUDFLARE" },
-    { code: "ap-south", name: "Asia Pacific (Mumbai)", provider: "CLOUDFLARE" },
-    {
-      code: "sa-east",
-      name: "South America (São Paulo)",
-      provider: "CLOUDFLARE",
-    },
-    { code: "me-central", name: "Middle East (Dubai)", provider: "CLOUDFLARE" },
-    { code: "af-south", name: "Africa (Cape Town)", provider: "CLOUDFLARE" },
-    { code: "oc-sydney", name: "Oceania (Sydney)", provider: "CLOUDFLARE" },
-  ];
-
-  for (const region of regions) {
+  for (const region of ALL_REGIONS) {
     await prisma.region.upsert({
-      where: { code: region.code },
-      update: {},
-      create: region as any,
+      where: { id: region.id },
+      update: { code: region.code, name: region.name },
+      create: { id: region.id, code: region.code, name: region.name },
     });
   }
 
-  console.log("✅ 7 regions created!");
+  console.log(`Seeded ${ALL_REGIONS.length} regions`);
 }
 
-seedRegions();
+seedRegions()
+  .catch((error) => {
+    console.error("Region seed failed:", error);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

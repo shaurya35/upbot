@@ -9,5 +9,10 @@
     "typescript": "^5.0.0",
     "store": "*",
     "redis-streams": "*"
+  },
+  "scripts": {
+    "dev": "bun --watch --env-file=../../.env index.ts",
+    "start": "bun --env-file=../../.env index.ts",
+    "check-types": "tsc --noEmit"
   }
 }

@@ -14,22 +14,13 @@ model User {
   password          String?
   name              String?
   company           String?
-  plan              Plan             @default(FREE)
   signupMethod      String
-  accounts          OAuthAccount[] 
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   emailVerified     DateTime?
   websites          Website[]
   alertChannels     AlertChannel[]
-  statusPages       StatusPage[]
-  teams             TeamMember[]
-  apiKeys           ApiKey[]
-  notifications     Notification[]
-  billingHistory    BillingHistory[]
   deletedAt         DateTime?
-  
-  @@index([plan])
 }
 
 model OtpVerification {
@@ -41,19 +32,6 @@ model OtpVerification {
   createdAt         DateTime        @default(now())
 }
 
-model OAuthAccount {
-  id             String    @id @default(uuid())
-  provider       String   
-  providerId     String    
-  userId         String
-  user           User      @relation(fields: [userId], references: [id])
-  accessToken    String?
-  refreshToken   String?
-  
-  @@unique([provider, providerId])
-  @@index([userId])
-}
-
 model Website {
   id                String           @id @default(uuid())
   url               String      
@@ -62,14 +40,10 @@ model Website {
   user              User             @relation(fields: [userId], references: [id])
   
   monitorInterval   Int              @default(60)  
-  dormancyProtection Boolean          @default(true) 
-  sslExpiryCheck    Boolean          @default(false)
   
   checks            Check[]         
   alertChannels     AlertChannel[]  
-  statusPages       WebsiteOnStatusPage[] 
   regions           Region[]         @relation("WebsiteRegions") 
-  teamWebsites      TeamWebsite[]
   
   createdAt         DateTime         @default(now())
   deletedAt         DateTime?      
@@ -92,7 +66,7 @@ model Check {
   
   createdAt         DateTime         @default(now())  
   
-  @@index([websiteId])
+  @@index([websiteId, createdAt])
   @@index([createdAt])  
 }
 
@@ -122,103 +96,6 @@ model AlertChannel {
   createdAt         DateTime         @default(now())
 }
 
-model StatusPage {
-  id                String           @id @default(uuid())
-  userId            String           
-  user              User             @relation(fields: [userId], references: [id])
-  
-  subdomain         String           @unique 
-  customDomain      String?          @unique 
-  title             String          
-  description       String?          
-  logoUrl           String?       
-  isPublic          Boolean          @default(true)
-  
-  websites          WebsiteOnStatusPage[]
-  
-  createdAt         DateTime         @default(now())
-}
-
-model WebsiteOnStatusPage {
-  websiteId         String           
-  statusPageId      String           
-  website           Website          @relation(fields: [websiteId], references: [id])
-  statusPage        StatusPage       @relation(fields: [statusPageId], references: [id])
-  position          Int             
-  
-  @@id([websiteId, statusPageId])  
-}
-
-model Team {
-  id                String           @id @default(uuid())
-  name              String        
-  plan              Plan             @default(FREE)
-  
-  members           TeamMember[]     
-  websites          TeamWebsite[]    
-  
-  createdAt         DateTime         @default(now())
-}
-
-model TeamMember {
-  id                String           @id @default(uuid())
-  teamId            String           
-  userId            String           
-  role              TeamRole         @default(MEMBER) 
-  
-  team              Team             @relation(fields: [teamId], references: [id])
-  user              User             @relation(fields: [userId], references: [id])
-  
-  createdAt         DateTime         @default(now())
-  @@unique([teamId, userId])        
-}
-
-model TeamWebsite {
-  teamId            String           
-  websiteId         String           
-  team              Team             @relation(fields: [teamId], references: [id])
-  website           Website?         @relation(fields: [websiteId], references: [id])
-  
-  @@id([teamId, websiteId])         
-}
-
-model ApiKey {
-  id                String           @id @default(uuid())
-  userId            String           
-  user              User             @relation(fields: [userId], references: [id])
-  
-  name              String           
-  key               String           @unique 
-  createdAt         DateTime         @default(now())
-  lastUsed          DateTime?      
-}
-
-model BillingHistory {
-  id                String           @id @default(uuid())
-  userId            String           
-  user              User             @relation(fields: [userId], references: [id])
-  
-  amount            Int              
-  currency          String           @default("usd")
-  description       String          
-  stripeSessionId   String?         
-  
-  createdAt         DateTime         @default(now())
-}
-
-model Notification {
-  id                String           @id @default(uuid())
-  userId            String           
-  user              User             @relation(fields: [userId], references: [id])
-
-  type              NotificationType 
-  title             String          
-  message           String           
-  isRead            Boolean          @default(false) 
-  
-  createdAt         DateTime         @default(now())
-}
-
 enum CheckStatus {
   UP
   DOWN
@@ -236,24 +113,4 @@ enum AlertType {
   SLACK
   WEBHOOK
   TELEGRAM
-}
-
-enum TeamRole {
-  MEMBER
-  ADMIN
-  OWNER
-}
-
-enum Plan {
-  FREE    
-  STARTER 
-  PRO      
-  AGENCY   
-}
-
-enum NotificationType {
-  INCIDENT
-  MAINTENANCE
-  BILLING
-  ANNOUNCEMENT
 }

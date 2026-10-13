@@ -1,18 +1,46 @@
 import { createClient } from "redis";
 import { prisma } from "store/client";
-import { xAddBulk } from "redis-streams/client";
-import { getRegionsForPlan } from "./region.config";
+import { xAddBulk, disconnect } from "redis-streams/client";
+import { getMonitoringRegions } from "store/regions";
 
 const SCHEDULE_KEY = "upbot:schedule";
 const CHECK_INTERVAL = 5000;
-const WEBSITE_REFRESH_INTERVAL = 300000; 
+const WEBSITE_REFRESH_INTERVAL = parseInt(process.env.WEBSITE_REFRESH_INTERVAL || "300000");
 const DEFAULT_TIMEOUT = 10000;
 
 const redisClient = createClient({ url: process.env.REDIS_URL });
 
+const monitoringRegions = getMonitoringRegions(process.env.MONITOR_REGIONS).map((region) => ({
+  regionId: region.id,
+  regionCode: region.code,
+}));
+
+type ScheduledWebsite = {
+  id: string;
+  url: string;
+  userId: string;
+  monitorInterval: number;
+};
+
+function toJob(website: ScheduledWebsite) {
+  return {
+    id: website.id,
+    url: website.url,
+    userId: website.userId,
+    monitorInterval: website.monitorInterval,
+    timeout: DEFAULT_TIMEOUT,
+    regions: monitoringRegions,
+  };
+}
+
+const findActiveWebsites = () =>
+  prisma.website.findMany({
+    where: { deletedAt: null, user: { deletedAt: null } },
+    select: { id: true, url: true, userId: true, monitorInterval: true },
+  });
+
 redisClient.on("error", (err) => console.error("Redis Error:", err));
 
-let processedWebsites = new Set<string>();
 let processingCycle = 1;
 
 async function processDueWebsites() {
@@ -37,40 +65,21 @@ async function processDueWebsites() {
 
     for (const website of websites) {
       try {
-        if (!processedWebsites.has(website.id)) {
-          console.log(`New website added: ${website.url} (${website.id})`);
-          processedWebsites.add(website.id);
-        }
-
         console.log(`Processing: ${website.url} (${website.id})`);
-        
-        const regions = getRegionsForPlan(website.userPlan);
-        console.log(`Regions for ${website.url}: ${regions.map(r => r.code).join(', ')}`);
 
-        const payload = {
+        payloads.push({
           id: website.id,
           url: website.url,
           userId: website.userId,
-          regions: regions.map(region => ({
-            regionId: region.id,
-            regionCode: region.code
-          })),
+          regions: website.regions,
           timeout: website.timeout || DEFAULT_TIMEOUT,
           monitorInterval: website.monitorInterval
-        };
-
-        payloads.push(payload);
-        console.log(`Created payload for ${website.url}`);
+        });
 
         const nextRun = now + (website.monitorInterval * 1000);
-        const rescheduleValue = JSON.stringify({
-          ...website,
-          regions: payload.regions
-        });
-        
         pipeline.zAdd(SCHEDULE_KEY, {
           score: nextRun,
-          value: rescheduleValue,
+          value: JSON.stringify(website),
         });
         
         console.log(`Rescheduled ${website.url} for ${new Date(nextRun).toISOString()} (in ${website.monitorInterval}s)`);
@@ -112,16 +121,7 @@ async function processDueWebsites() {
 async function refreshWebsites() {
   try {
     console.log("\n Refreshing websites from database...");
-    const websites = await prisma.website.findMany({
-      where: { deletedAt: null },
-      include: {
-        user: {
-          select: {
-            plan: true,
-          },
-        },
-      },
-    });
+    const websites = await findActiveWebsites();
 
     const existingWebsites = await redisClient.zRange(SCHEDULE_KEY, 0, -1);
     const existingIds = new Set(existingWebsites.map(w => JSON.parse(w).id));
@@ -134,19 +134,7 @@ async function refreshWebsites() {
       const now = Date.now();
 
       for (const website of newWebsites) {
-        const regions = getRegionsForPlan(website.user.plan);
-        const job = {
-          id: website.id,
-          url: website.url,
-          userId: website.userId,
-          monitorInterval: website.monitorInterval,
-          timeout: DEFAULT_TIMEOUT,
-          regions: regions.map(region => ({
-            regionId: region.id,
-            regionCode: region.code
-          })),
-          userPlan: website.user.plan
-        };
+        const job = toJob(website);
 
         const initialDelay = Math.random() * job.monitorInterval * 1000;
         const nextRun = now + initialDelay;
@@ -157,7 +145,6 @@ async function refreshWebsites() {
         });
         
         console.log(`Scheduled new website ${website.url} for ${new Date(nextRun).toISOString()}`);
-        console.log(`Plan: ${job.userPlan}, Regions: ${job.regions.map(r => r.regionCode).join(', ')}`);
       }
 
       await pipeline.exec();
@@ -176,35 +163,12 @@ async function initScheduler() {
     await redisClient.del(SCHEDULE_KEY);
     console.log("Cleared existing schedule");
 
-    const websites = await prisma.website.findMany({
-      where: { deletedAt: null },
-      include: {
-        user: {
-          select: {
-            plan: true,
-          },
-        },
-      },
-    });
+    const websites = await findActiveWebsites();
 
     console.log(`Fetched ${websites.length} websites from database`);
+    console.log(`Checking from regions: ${monitoringRegions.map(r => r.regionCode).join(', ')}`);
 
-    const jobs = websites.map((website) => {
-      const regions = getRegionsForPlan(website.user.plan);
-      
-      return {
-        id: website.id,
-        url: website.url,
-        userId: website.userId,
-        monitorInterval: website.monitorInterval,
-        timeout: DEFAULT_TIMEOUT,
-        regions: regions.map(region => ({
-          regionId: region.id,
-          regionCode: region.code
-        })),
-        userPlan: website.user.plan
-      };
-    });
+    const jobs = websites.map(toJob);
 
     console.log(`Creating ${jobs.length} jobs`);
 
@@ -220,8 +184,7 @@ async function initScheduler() {
         value: JSON.stringify(job),
       });
       
-      console.log(`Scheduled ${job.url} with ${job.regions.length} regions for ${new Date(nextRun).toISOString()} (in ${Math.round(initialDelay/1000)}s)`);
-      console.log(`Plan: ${job.userPlan}, Regions: ${job.regions.map(r => r.regionCode).join(', ')}`);
+      console.log(`Scheduled ${job.url} for ${new Date(nextRun).toISOString()} (in ${Math.round(initialDelay/1000)}s)`);
     });
 
     await pipeline.exec();
@@ -251,16 +214,21 @@ async function initialize() {
   }
 }
 
-process.on("SIGINT", async () => {
-  console.log("Received SIGINT, shutting down...");
-  await redisClient.quit();
-  process.exit(0);
-});
+let shuttingDown = false;
 
-process.on("SIGTERM", async () => {
-  console.log("Received SIGTERM, shutting down...");
-  await redisClient.quit();
+async function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}, shutting down...`);
+  await Promise.allSettled([
+    redisClient.isOpen ? redisClient.quit() : Promise.resolve(),
+    disconnect(),
+    prisma.$disconnect(),
+  ]);
   process.exit(0);
-});
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 initialize();

@@ -91,31 +91,12 @@ export const ALL_REGIONS: Region[] = [
   { id: "f89bf72c-ce82-4013-b3f7-3dd0d572e0fb", code: "BOG", name: "Bogota" },
 ];
 
-export const PLAN_REGIONS = {
-  FREE: ["SFO"],
-  STARTER: ["SFO", "NYC", "LON", "AMS", "FRA"],
-  PRO: ["SFO", "NYC", "LON", "AMS", "FRA", "SYD", "SIN", "DXB", "DEL", "TYO"],
-  AGENCY: [
-    "SFO",
-    "NYC",
-    "LON",
-    "AMS",
-    "FRA",
-    "SYD",
-    "SIN",
-    "DXB",
-    "DEL",
-    "TYO",
-    "MAD",
-    "GRU",
-    "CPT",
-    "HKG",
-    "BKK",
-  ],
-};
+export const DEFAULT_REGION_CODES = ["SFO"];
 
-export function getRegionsForPlan(plan: string): Region[] {
-  const regionCodes =
-    PLAN_REGIONS[plan as keyof typeof PLAN_REGIONS] || PLAN_REGIONS.FREE;
-  return ALL_REGIONS.filter((region) => regionCodes.includes(region.code));
+export function getMonitoringRegions(codes?: string): Region[] {
+  const requested = codes
+    ? codes.split(",").map((code) => code.trim().toUpperCase()).filter(Boolean)
+    : DEFAULT_REGION_CODES;
+  const regions = ALL_REGIONS.filter((region) => requested.includes(region.code));
+  return regions.length ? regions : ALL_REGIONS.filter((region) => DEFAULT_REGION_CODES.includes(region.code));
 }
