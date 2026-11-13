@@ -6,10 +6,13 @@ import {
   disconnect,
 } from "redis-streams/client";
 import axios from "axios";
+import { saveObservation, deliverPending } from "./incidents";
 
 const WORKER_URL = process.env.WORKER_URL;
 const WORKER_ID = process.env.WORKER_ID || `worker-${process.pid}`;
-const CLOUDFLARE_TIMEOUT_MARGIN = parseInt(process.env.CLOUDFLARE_TIMEOUT_MARGIN || "10000");
+const CLOUDFLARE_TIMEOUT_MARGIN = parseInt(
+  process.env.CLOUDFLARE_TIMEOUT_MARGIN || "10000",
+);
 const DEFAULT_CHECK_TIMEOUT = 10000;
 const WORKER_SECRET = process.env.WORKER_SECRET;
 
@@ -18,13 +21,14 @@ if (!WORKER_URL) {
 }
 
 async function callCloudflareWorker(payload: any) {
-  if(!WORKER_URL){
-    throw new Error("WORKER_URL not set!")
+  if (!WORKER_URL) {
+    throw new Error("WORKER_URL not set!");
   }
   const start = Date.now();
   try {
     const response = await axios.post(WORKER_URL, payload, {
-      timeout: (payload.timeout || DEFAULT_CHECK_TIMEOUT) + CLOUDFLARE_TIMEOUT_MARGIN,
+      timeout:
+        (payload.timeout || DEFAULT_CHECK_TIMEOUT) + CLOUDFLARE_TIMEOUT_MARGIN,
       headers: WORKER_SECRET ? { "X-Upbot-Secret": WORKER_SECRET } : undefined,
     });
 
@@ -65,73 +69,70 @@ async function callCloudflareWorker(payload: any) {
   }
 }
 
-async function processBatch(messages: any[]) {
-  const ackIds: string[] = [];
-  const allChecks: any[] = [];
-
-  const websitePromises = messages.map(async (message) => {
+export async function processBatch(messages: any[]) {
+  for (const message of messages) {
     try {
       const payload = message.message;
-      console.log(`Processing website: ${payload.url} (${payload.id})`);
-
-      const result = await callCloudflareWorker(payload);
-
-      if (!result.success) {
-        console.error(
-          `Cloudflare call failed for ${payload.id}:`,
-          result.error
-        );
-        return { messageId: message.id, checks: [] };
-      }
-
-      const checks = result.data!.checks.map((check: any) => ({
-        websiteId: check.websiteId || payload.id,
-        regionId: check.regionId,
-        status: check.status,
-        responseTime: check.responseTime,
-        statusCode: check.statusCode,
-        error: check.error,
-      }));
-
-      console.log(`Processed website: ${payload.url} (${checks.length} checks)`);
-      return { messageId: message.id, checks };
-    } catch (error) {
-      console.error(`Failed to process message:`, error);
-      return { messageId: message.id, checks: [] };
-    }
-  });
-
-  const results = await Promise.all(websitePromises);
-
-  for (const result of results) {
-    allChecks.push(...result.checks);
-    if (result.checks.length > 0) {
-      ackIds.push(result.messageId);
-    }
-  }
-
-  if (allChecks.length > 0) {
-    try {
-      console.log(`Bulk inserting ${allChecks.length} checks to database`);
-      await prisma.check.createMany({
-        data: allChecks,
-        skipDuplicates: true, 
+      const site = await prisma.website.findFirst({
+        where: { id: payload.id, deletedAt: null, user: { deletedAt: null } },
       });
-      console.log(`Successfully inserted ${allChecks.length} checks`);
+      if (
+        !site ||
+        site.url !== payload.url ||
+        site.monitorInterval !== payload.monitorInterval
+      ) {
+        await xAckBulk([message.id]);
+        continue;
+      }
+      const existing = await prisma.check.findFirst({
+        where: { observationKey: { startsWith: `${message.id}:` } },
+      });
+      if (existing) {
+        await xAckBulk([message.id]);
+        continue;
+      }
+      const result = await callCloudflareWorker(payload);
+      if (!result.success || !result.data?.checks?.length) continue;
+      for (const check of result.data.checks) {
+        await saveObservation({
+          observationKey: `${message.id}:${check.regionId}`,
+          websiteId: payload.id,
+          regionId: check.regionId,
+          status: check.status,
+          responseTime: check.responseTime,
+          statusCode: check.statusCode,
+          error: check.error,
+          createdAt: new Date(check.createdAt),
+        });
+      }
+      await xAckBulk([message.id]);
     } catch (error) {
-      console.error(`Failed to bulk insert checks:`, error);
+      console.error("Failed to process check:", error);
     }
-  }
-
-  if (ackIds.length > 0) {
-    await xAckBulk(ackIds);
-    console.log(`Acknowledged ${ackIds.length} messages`);
   }
 }
 
 async function main() {
   console.log(`Worker started with ID: ${WORKER_ID}`);
-  
+
+  if (
+    (process.env.MONITOR_REGIONS || "SFO").split(",").filter(Boolean).length !==
+    1
+  )
+    throw new Error(
+      "Incident detection requires exactly one configured monitoring region",
+    );
+  let delivering = false;
+  setInterval(() => {
+    if (!delivering) {
+      delivering = true;
+      deliverPending()
+        .catch(console.error)
+        .finally(() => {
+          delivering = false;
+        });
+    }
+  }, 1000);
   while (true) {
     try {
       const newMessages = await xReadGroup(WORKER_ID);
@@ -144,7 +145,9 @@ async function main() {
         const startTime = Date.now();
         await processBatch(allMessages);
         const processingTime = Date.now() - startTime;
-        console.log(`Batch processed in ${processingTime}ms (${Math.round(allMessages.length / (processingTime / 1000))} websites/sec)`);
+        console.log(
+          `Batch processed in ${processingTime}ms (${Math.round(allMessages.length / (processingTime / 1000))} websites/sec)`,
+        );
       } else {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -168,7 +171,9 @@ async function shutdown(signal: string) {
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-main().catch((error) => {
-  console.error(` Fatal error:`, error);
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch((error) => {
+    console.error(` Fatal error:`, error);
+    process.exit(1);
+  });
+}

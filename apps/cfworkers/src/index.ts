@@ -48,27 +48,23 @@ async function performCheck(
 		error: undefined as string | undefined,
 	};
 
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), timeout);
 	try {
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-		const response = await fetch(url, {
-			method: 'HEAD',
-			redirect: 'follow',
-			signal: controller.signal,
-			cf: {
-				colo: regionCode,
-				cacheEverything: false,
-			},
-		});
-
-		clearTimeout(timeoutId);
+		const options = { redirect: 'follow' as const, signal: controller.signal, cf: { colo: regionCode, cacheEverything: false } };
+		let response = await fetch(url, { ...options, method: 'HEAD' });
+		if (response.status === 405 || response.status === 501) {
+			await response.body?.cancel();
+			response = await fetch(url, { ...options, method: 'GET' });
+		}
 		result.status = response.ok ? 'UP' : 'DOWN';
 		result.statusCode = response.status;
+		await response.body?.cancel();
 	} catch (error: unknown) {
 		result.status = 'DOWN';
 		result.error = error instanceof Error ? error.message : 'Request failed';
 	} finally {
+		clearTimeout(timeoutId);
 		result.responseTime = Date.now() - startTime;
 	}
 

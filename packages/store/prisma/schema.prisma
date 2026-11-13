@@ -42,6 +42,8 @@ model Website {
   monitorInterval   Int              @default(60)  
   
   checks            Check[]         
+  incidents         Incident[]
+  incidentState     IncidentState?
   alertChannels     AlertChannel[]  
   regions           Region[]         @relation("WebsiteRegions") 
   
@@ -52,6 +54,7 @@ model Website {
 }
 
 model Check {
+  observationKey    String?          @unique
   id                String           @id @default(uuid())
   
   websiteId         String           
@@ -91,7 +94,8 @@ model AlertChannel {
   phone             String?        
   isActive          Boolean          @default(true)
   
-  websites          Website[]       
+  websites          Website[]
+  deliveries        WebhookDelivery[]
   
   createdAt         DateTime         @default(now())
 }
@@ -113,4 +117,40 @@ enum AlertType {
   SLACK
   WEBHOOK
   TELEGRAM
+}
+
+model IncidentState {
+  websiteId       String @id
+  website         Website @relation(fields: [websiteId], references: [id])
+  lastObservedAt  DateTime?
+  consecutiveDown Int @default(0)
+  firstDownAt     DateTime?
+  firstDownReason String?
+}
+
+model Incident {
+  id          String @id @default(uuid())
+  websiteId   String
+  website     Website @relation(fields: [websiteId], references: [id])
+  startedAt   DateTime
+  recoveredAt DateTime?
+  reason      String?
+  deliveries  WebhookDelivery[]
+  @@index([websiteId, startedAt])
+}
+
+model WebhookDelivery {
+  id          String @id @default(uuid())
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id])
+  channelId   String
+  channel     AlertChannel @relation(fields: [channelId], references: [id])
+  eventType   String
+  occurredAt  DateTime
+  status      String @default("PENDING")
+  attempts    Int @default(0)
+  nextAttempt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  @@unique([incidentId, channelId, eventType])
+  @@index([status, nextAttempt])
 }
