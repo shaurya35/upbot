@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent, useRef } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -190,23 +189,6 @@ export default function Home() {
     }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const ctaLabel = appUrl ? "Get Started" : "Join Waitlist";
-  const handleCta = () => {
-    if (appUrl) {
-      window.location.href = `${appUrl}/signup`;
-    } else {
-      scrollToTop();
-    }
-  };
-
   const handleWaitlistSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateEmail(email)) return;
@@ -250,6 +232,7 @@ export default function Home() {
       >
         <div className="container mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex h-14 sm:h-16 items-center justify-between max-w-7xl mx-auto">
+            <div className="flex min-w-0 items-center gap-4 sm:gap-8">
             <Link
               href="/"
               className="flex items-center space-x-1 sm:space-x-2 group"
@@ -262,13 +245,22 @@ export default function Home() {
                 Upbot
               </span> 
             </Link>
+              <nav aria-label="Page sections" className="hidden md:flex items-center gap-6">
+                <a href="#features" className="text-xs sm:text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Features</a>
+                <a href="#integrations" className="text-xs sm:text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Integrations</a>
+                <a href="#community" className="text-xs sm:text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Community</a>
+              </nav>
+            </div>
             <nav className="hidden md:flex items-center space-x-6">
               <Button
+                asChild
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 hover:scale-105 active:scale-95"
-                onClick={handleCta}
+                className="bg-emerald-600 hover:bg-emerald-700 transition-colors duration-150"
               >
-                {ctaLabel}
+                <a href="https://github.com/shaurya35/upbot" target="_blank" rel="noopener noreferrer">
+                  <span>Star us</span>
+                  <Github className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </a>
               </Button>
             </nav>
             <Button
@@ -289,15 +281,20 @@ export default function Home() {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t bg-white animate-in slide-in-from-top-2 duration-200">
               <div className="px-3 py-4 space-y-2">
-                <Button
-                  size="sm"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleCta();
-                  }}
-                >
-                  {ctaLabel}
+                {[
+                  { label: "Features", href: "#features" },
+                  { label: "Integrations", href: "#integrations" },
+                  { label: "Community", href: "#community" },
+                ].map((link) => (
+                  <a key={link.href} href={link.href} onClick={() => setIsMobileMenuOpen(false)} className="block rounded-md px-3 py-3 text-sm font-medium text-slate-600 hover:text-emerald-600">
+                    {link.label}
+                  </a>
+                ))}
+                <Button asChild size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700">
+                  <a href="https://github.com/shaurya35/upbot" target="_blank" rel="noopener noreferrer" onClick={() => setIsMobileMenuOpen(false)}>
+                    <span>Star us</span>
+                    <Github className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </a>
                 </Button>
               </div>
             </div>
@@ -324,7 +321,7 @@ export default function Home() {
                 variant="secondary"
                 className="mb-4 sm:mb-8 bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1.5 text-xs sm:text-sm font-medium hover:bg-emerald-100 transition-colors duration-200"
               >
-                Trusted by fast-growing community worldwide
+                Open-source uptime monitoring platform
               </Badge>
 
               <h1 className="mb-4 sm:mb-8 text-fluid-3xl sm:text-fluid-4xl md:text-fluid-5xl lg:text-fluid-6xl font-bold tracking-[-0.02em] text-slate-900 leading-[1.1]">
@@ -361,9 +358,8 @@ export default function Home() {
               </h1>
 
               <p className="mx-auto mb-6 sm:mb-12 max-w-2xl text-fluid-sm sm:text-fluid-base md:text-fluid-lg text-slate-600 leading-[1.6] px-1 sm:px-4 lg:px-0">
-                Monitor your websites from 15+ global locations with instant
-                alerts, detailed analytics, and comprehensive downtime
-                reporting.
+                Monitor your websites with scheduled checks, response-time
+                history, incident tracking, and webhook notifications.
               </p>
 
               <div className="mb-12 sm:mb-12 px-3 sm:px-0">
@@ -415,7 +411,7 @@ export default function Home() {
                         </>
                       ) : (
                         <>
-                          Join Waitlist
+                          Join Cloud Waitlist
                           <ArrowRight className="ml-1.5 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
                         </>
                       )}
@@ -444,24 +440,21 @@ export default function Home() {
                         developers already joined
                       </span>
                     </div>
-                  ) : (
+                  ) : waitlistCount !== null ? (
                     <div className="flex items-center space-x-2 text-sm text-slate-600 bg-slate-50 rounded-lg px-4 py-2">
                       <Users className="h-4 w-4 text-emerald-600" />
                       <span>
                         <span className="font-semibold text-emerald-600">
-                          {waitlistCount !== null
-                            ? waitlistCount.toLocaleString()
-                            : "0"}
+                          {waitlistCount.toLocaleString()}
                         </span>{" "}
                         developers already joined
                       </span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <p className="text-xs sm:text-sm text-slate-500 mt-2 sm:mt-3">
-                  🚀 Currently in development. Be the first to know when we
-                  launch!
+                  Open-source. Self-host today, or join the waitlist for cloud hosting.
                 </p>
               </div>
 
@@ -491,6 +484,8 @@ export default function Home() {
 
       
         <section
+          id="features"
+          style={{ scrollMarginTop: "5rem" }}
           ref={(el) => {
             sectionsRef.current[1] = el;
           }}
@@ -715,6 +710,8 @@ export default function Home() {
         </section>
 
         <section
+          id="integrations"
+          style={{ scrollMarginTop: "5rem" }}
           ref={(el) => {
             sectionsRef.current[2] = el;
           }}
@@ -766,11 +763,13 @@ export default function Home() {
                   exactly where you want.
                 </p>
                 <Button
+                  asChild
                   className="bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/25 w-full sm:w-auto text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
-                  onClick={handleCta}
                 >
-                  {ctaLabel}
-                  <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
+                  <a href="https://github.com/shaurya35/upbot" target="_blank" rel="noopener noreferrer">
+                    Get Started
+                    <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
+                  </a>
                 </Button>
               </div>
             </div>
@@ -778,6 +777,8 @@ export default function Home() {
         </section>
 
         <section
+          id="community"
+          style={{ scrollMarginTop: "5rem" }}
           ref={(el) => {
             sectionsRef.current[3] = el;
           }}
@@ -928,12 +929,14 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6 sm:mb-12 px-1 sm:px-4 lg:px-0">
                 <div className="w-full sm:w-auto">
                   <Button
+                    asChild
                     size="lg"
                     className="bg-white text-emerald-600 hover:bg-emerald-50 hover:shadow-xl hover:shadow-white/20 px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold w-full sm:w-auto transition-all duration-200 hover:scale-105 active:scale-95"
-                    onClick={handleCta}
                   >
-                    {ctaLabel}
-                    <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
+                    <a href="https://github.com/shaurya35/upbot" target="_blank" rel="noopener noreferrer">
+                      Get Started
+                      <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
+                    </a>
                   </Button>
                 </div>
                 <Button
@@ -997,7 +1000,7 @@ export default function Home() {
                   },
                   {
                     icon: Github,
-                    href: "https://github.com/shaurya35/",
+                    href: "https://github.com/shaurya35/upbot",
                     label: "Github",
                   },
                   {
@@ -1025,7 +1028,7 @@ export default function Home() {
                 links: [
                   { label: "Home", href: "#", external: false },
                   { label: "Features", href: "#", external: false },
-                  { label: ctaLabel, href: "#", external: false, onClick: handleCta },
+                  { label: "Get Started", href: "https://github.com/shaurya35/upbot", external: true },
                 ],
               },
               {
@@ -1033,7 +1036,7 @@ export default function Home() {
                 links: [
                   {
                     label: "About",
-                    href: "https://x.com/_shaurya35",
+                    href: "https://www.shauryacodes.me/",
                     external: true,
                   },
                   {
@@ -1071,7 +1074,6 @@ export default function Home() {
                         className="hover:text-emerald-600 transition-colors duration-200 relative group"
                         target={link.external ? "_blank" : undefined}
                         rel={link.external ? "noopener noreferrer" : undefined}
-                        onClick={link.onClick}
                       >
                         {link.label}
                         <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-600 group-hover:w-full transition-all duration-200" />
