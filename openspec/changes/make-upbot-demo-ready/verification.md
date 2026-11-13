@@ -1,0 +1,19 @@
+# Verification
+
+All database integration checks used disposable local Docker containers and separate test databases. No hosted database or existing waitlist record was changed. The local preview used a temporary demo database; it was not deployed. All Upbot processes and test containers were stopped after verification.
+
+- `bun run test --run` in `apps/cfworkers`: seven checker tests passed, including HEAD success, GET fallback for 405/501, shared timeout, errors, and authentication.
+- `bun run --cwd apps/worker test`: 11 incident, webhook and acknowledgement tests passed in isolated Bun test contexts.
+- `bun test apps/server/controllers/v1/websiteControllers/monitorStatus.test.ts apps/pusher/reconciliation.test.ts`: four tests passed.
+- A waitlist integration test using only `TEST_WEB_DATABASE_URL` verified signup, a count increment, and duplicate rejection in a separate temporary database.
+- An old-schema database with an existing account accepted `packages/store/prisma/migrations/20261113000000_demo_monitoring/migration.sql`; the account remained present.
+- A real isolated scheduler, Redis Stream, checker, worker, target, API and Postgres produced healthy checks. Switching the target down produced one incident after two failures and delivered its outage webhook; restoring the target closed that incident and delivered its recovery webhook. The public demo displayed the incident, duration, and sanitized delivery state without login.
+- Re-running demo preparation left two monitors. Editing a monitor updated the Redis settings without changing its due time; deleting a separate test monitor removed it from the schedule. A failed Redis publication left its scheduled score unchanged.
+- Pausing the isolated Postgres left a queued check pending; the pending count returned to zero after Postgres resumed. Replaying a saved observation created no duplicate check, incident, or delivery. A deliberately failed webhook was retried successfully with the same event ID; unit tests cover final failure at five attempts.
+- A disposable account completed signup, create, edit, read and delete. Private monitor and incident access were rejected; public demo writes returned 404. A stopped worker and an old observation produced the stale state.
+- Desktop and mobile demo pages, the shared incident view, loading/error/retry and empty states, and the landing demo link were inspected locally with gstack browse. Both frontend production builds and the relevant workspace type checks passed.
+- In a temporary clean copy, normal `bun install` and `bun run dev` started all services using fresh isolated monitoring and waitlist databases. The documented preparation and API restart produced real healthy checks. Prisma also created a previously absent isolated waitlist database on first schema push. `bun install --frozen-lockfile` did not pass because existing `@types/bun: latest` entries resolve to newer types than the committed lockfile; normal install updated the temporary copy's lockfile. Release preparation pinned those existing type versions and verified that `bun install --frozen-lockfile --ignore-scripts` now passes.
+
+The existing local waitlist container was also checked read-only: its endpoint returned zero entries. The count hides only when its database is unreachable; no waitlist entry was deleted. Signup/count behavior was verified against the isolated waitlist database.
+
+Final user direction removed the landing demo link and restored the original content from Upbot Components downward, retaining the approved button/link destinations. The direct `/demo` route remains available when running the app. Final checks passed: 23 targeted tests, workspace type checks, frozen installation, both frontend production builds, and lint (five existing warnings in UI helper files).

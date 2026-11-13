@@ -62,7 +62,7 @@
     "apps/pusher": {
       "name": "pusher",
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "1.4.3",
       },
       "peerDependencies": {
         "redis-streams": "*",
@@ -88,7 +88,7 @@
         "nodemailer": "^7.0.5",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "1.4.3",
       },
       "peerDependencies": {
         "store": "*",
@@ -175,7 +175,7 @@
         "store": "*",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "1.4.3",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -187,7 +187,7 @@
         "redis": "^5.7.0",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "1.2.20",
       },
       "peerDependencies": {
         "typescript": "^5.0.0",
@@ -200,7 +200,7 @@
         "prisma": "^6.12.0",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "1.2.20",
       },
       "peerDependencies": {
         "typescript": "^5.0.0",

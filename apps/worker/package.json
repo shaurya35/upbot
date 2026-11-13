@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "1.4.3"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -17,6 +17,7 @@
   "scripts": {
     "dev": "bun --watch --env-file=../../.env index.ts",
     "start": "bun --env-file=../../.env index.ts",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "bun test --isolate"
   }
 }

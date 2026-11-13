@@ -1,166 +1,41 @@
 # Architecture
 
-Upbot separates the request API from scheduled monitoring work. PostgreSQL stores the websites and check history. Redis holds the schedule and jobs. A queue consumer calls a Cloudflare Worker to perform HTTP checks.
+Upbot separates its API from scheduled monitoring work. PostgreSQL stores websites, check history, incidents, and notification delivery state. Redis holds the schedule and jobs. A queue consumer calls a Cloudflare Worker to perform HTTP checks.
 
 ## Diagrams
 
-| File                                        | Purpose                                                                    |
-| ------------------------------------------- | -------------------------------------------------------------------------- |
-| [System overview](system-overview.png)      | Main services and data paths in the current implementation.                |
-| [Overview source](system-overview.svg)      | Editable vector source for the overview image.                             |
-| [Scheduler and worker](low-level.png)       | Original sketch of the scheduler and queue consumer functions.             |
-| [Excalidraw board](architecture.excalidraw) | Original editable board, including early product ideas and future designs. |
+| File | Purpose |
+| --- | --- |
+| [System overview](system-overview.png) | Main services and data paths. |
+| [Overview source](system-overview.svg) | Editable source for the overview image. |
+| [Scheduler and worker](low-level.png) | Earlier scheduler and queue-consumer sketch. |
+| [Excalidraw board](architecture.excalidraw) | Editable board with earlier ideas and future designs. |
 
-The Excalidraw board includes Clerk, sharding, a time series database, and other design ideas. These are not all implemented. The overview and notes below describe the current code.
-
-## Service boundaries
-
-| Component         | Reads                                                         | Writes or returns                                            |
-| ----------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
-| API               | Users, websites, profiles, and alert channel records.         | Account and website records in PostgreSQL.                   |
-| Pusher            | Active websites from PostgreSQL and due entries from Redis.   | Schedule entries and check jobs.                             |
-| Redis Streams     | Jobs published by the pusher.                                 | Deliveries and pending message state for the consumer group. |
-| Worker            | New jobs, pending jobs, and HTTP check results.               | Bulk check inserts and stream acknowledgements.              |
-| Cloudflare Worker | A website URL, requested region metadata, and a timeout.      | Status, latency, HTTP status code, and error details.        |
-| Dashboard         | Authentication and profile endpoints; sample monitoring data. | Local UI state for the monitoring screens.                   |
-
-The landing page in `apps/web` is separate from the dashboard in `apps/client`. It uses its own waitlist database schema.
+The diagrams predate the incident and webhook additions. Treat them as an overview, not a complete specification of the latest code.
 
 ## Check lifecycle
 
-```mermaid
-sequenceDiagram
-    participant DB as PostgreSQL
-    participant P as Pusher
-    participant S as Redis schedule
-    participant Q as Redis Stream
-    participant W as Worker
-    participant C as Cloudflare Worker
-    participant T as Target website
+1. The authenticated API stores each monitor and its interval in PostgreSQL.
+2. The scheduler periodically reconciles active websites with a Redis sorted set, using stable website IDs as members and a separate settings hash. Edits and deletions are reflected on the next refresh. An unchanged monitor retains its scheduled time.
+3. Every five seconds the scheduler reads due IDs. For each monitor, a Redis script publishes a job and advances its next check time. Local scheduling and reconciliation passes run sequentially. The scheduler is designed to run as a single process.
+4. Workers read Redis Stream jobs through a shared consumer group and claim pending jobs. Deleted websites are skipped. The checker sends an HTTP HEAD request and falls back to GET when HEAD returns 405 or 501, within one timeout. Other unsuccessful responses are DOWN.
+5. Each check is saved with its observation time and a unique stream-message/region key. The worker acknowledges after persistence succeeds. Replaying a stored job does not insert the same check twice. If the database is unavailable, the job remains pending.
+6. Incident state is updated with the observation in the same transaction. Two consecutive fresh failures open an incident; a later UP closes it. Old or duplicate observations do not change the current incident state. A freshness gap resets the consecutive-failure count.
+7. Opening or closing an incident creates delivery records for the owner's active generic webhook channels. A worker polls pending deliveries and retries unsuccessful requests up to five times. Each event has a stable ID and `Idempotency-Key`; receivers should deduplicate because a network retry can arrive after a successful request whose response was lost.
 
-    P->>DB: Load active websites
-    DB-->>P: Website settings
-    P->>S: Store jobs scored by next check time
-    loop Every five seconds
-        P->>S: Read entries due now
-        S-->>P: Due websites
-        P->>Q: Publish one job per website
-        P->>S: Set next check time
-    end
-    W->>Q: Read new jobs and claim idle pending jobs
-    Q-->>W: Website jobs
-    W->>C: POST website URL and requested regions
-    loop Each requested region entry
-        C->>T: HEAD request
-        T-->>C: HTTP response or failure
-    end
-    C-->>W: Check results
-    W->>DB: Attempt bulk insert
-    DB-->>W: Insert outcome
-    Note over W,Q: Current code may acknowledge even if the insert fails
-    W->>Q: Acknowledge jobs that returned checks
-```
+Code: [scheduler](../../apps/pusher/index.ts), [stream client](../../packages/redis-streams/index.ts), [worker](../../apps/worker/index.ts), [incident processing](../../apps/worker/incidents.ts), [checker](../../apps/cfworkers/src/index.ts), and [database schema](../../packages/store/prisma/schema.prisma).
 
-## Scheduling
+## Dashboard and demo
 
-The pusher keeps the next check time in the Redis sorted set `upbot:schedule`. The score is a timestamp in milliseconds. The member is a JSON string containing the website settings and regions.
+The authenticated dashboard uses ownership-checked API endpoints. It shows check history, response times, incidents, and sanitized webhook delivery status. An observation becomes stale when older than the greater of three monitor intervals and 120 seconds; the current status then becomes UNKNOWN. Uptime percentages represent the proportion of observed checks that were UP, not an elapsed-time availability guarantee.
 
-At startup, the pusher deletes the schedule key and rebuilds it from active websites. It spreads initial check times across each website's interval using a random delay.
-
-Every five seconds, it reads members whose score is at or below the current time. It publishes their jobs, then writes their next check times. `monitorInterval` is stored in seconds and converted to milliseconds when computing the next run.
-
-A separate refresh (every `WEBSITE_REFRESH_INTERVAL`, five minutes by default) adds websites that are not already in the schedule. It currently does not update existing entries or remove deleted websites.
-
-Code: [pusher](../../apps/pusher/index.ts), [region configuration](../../packages/store/regions.ts).
-
-## Queue contract
-
-All website jobs use one Redis Stream, `upbot:websites`. Workers share the `monitoring` consumer group. Each job contains a list of requested regions; the pusher does not publish a separate stream message for each region.
-
-Example of a decoded job with `MONITOR_REGIONS=SFO`:
-
-```json
-{
-  "id": "website-id",
-  "url": "https://example.com",
-  "userId": "user-id",
-  "regions": [
-    {
-      "regionId": "46dc26c3-2321-4244-9940-45c860d22676",
-      "regionCode": "SFO"
-    }
-  ],
-  "timeout": 10000,
-  "monitorInterval": 60
-}
-```
-
-In the stream, `regions` is stored as JSON text. Numeric values are stored as strings and parsed when a worker reads the message. The Redis message ID is separate from the website `id` and is used for acknowledgement.
-
-The shared client reads up to ten new messages at a time and blocks for up to five seconds. It can also claim up to ten messages that have been idle for at least 30 seconds. `MAX_BATCH_SIZE` limits how many of the collected messages the worker processes; it does not change the stream read count.
-
-Code: [Redis Streams client](../../packages/redis-streams/index.ts), [worker](../../apps/worker/index.ts).
-
-## HTTP checks and storage
-
-The Cloudflare Worker accepts `POST` requests. It validates the job shape and URL, requires at least one region entry, and runs the checks concurrently.
-
-Each check uses `HEAD`, follows redirects, and aborts when its timeout expires. A successful HTTP response is recorded as `UP`. Other HTTP responses and request errors are recorded as `DOWN`. A target that rejects `HEAD` may therefore be marked down even if it serves `GET` requests successfully.
-
-The worker combines the results and calls `prisma.check.createMany`. A check row references the website and region and records status, response time, status code, error, and creation time.
-
-| Setting                         | Current value or default                                                    |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| Scheduler polling               | 5 seconds.                                                                  |
-| New website refresh             | 5 minutes.                                                                  |
-| Default website interval        | 60 seconds, from the database schema.                                       |
-| Timeout published by the pusher | 10 seconds.                                                                 |
-| Cloudflare check timeout cap    | 30 seconds.                                                                 |
-| Stream read size                | 10 messages.                                                                |
-| Pending recovery                | Up to 10 messages idle for at least 30 seconds.                             |
-| Worker `MAX_BATCH_SIZE`         | 50 jobs.                                                                    |
-| Worker `WEBSITE_TIMEOUT`        | 3,600,000 ms; an outer processing deadline, separate from the HTTP timeout. |
-
-Code: [Cloudflare Worker](../../apps/cfworkers/src/index.ts), [monitoring schema](../../packages/store/prisma/schema.prisma).
-
-## Why these components are separate
-
-- **Sorted set for scheduling:** next-run timestamps let the pusher select due websites without creating a timer for every site.
-- **Stream for delivery:** the consumer group shares jobs across workers and tracks deliveries that have not been acknowledged.
-- **Separate HTTP checker:** network requests run outside the API and can be changed independently of the queue consumer.
-- **Bulk database writes:** the consumer combines check results into one insert operation for each batch.
-- **Shared schema and queue package:** services use the same data model and job encoding.
-
-The worker can have multiple consumers with distinct IDs. The pusher is currently designed as a single process. Adding more pushers would require coordination because each one deletes and rebuilds the same schedule key at startup.
+The optional public demo uses `DEMO_USER_ID` to select a dedicated account. Its read-only API exposes only that account's monitor results and sanitized incident delivery statuses. It does not expose channel destinations or allow guest writes. See the [demo walkthrough](../../README.md#demo-walkthrough) for the local target and receiver.
 
 ## Current limits
 
-### Database writes and acknowledgements
-
-The worker collects acknowledgement IDs when a job returns checks. If the bulk insert fails, it logs the error and still acknowledges those IDs. An acknowledgement therefore does not prove that the results were saved.
-
-The write and acknowledgement steps are not atomic. There is also no stable job-result key for deduplication: check IDs are generated by the database, so `skipDuplicates` does not prevent repeated results when a job is retried.
-
-The next step is to acknowledge only after a successful write and define a unique result key before retry handling is treated as reliable. Stream retention and a limit on failed-job retries also need to be added.
-
-### Schedule updates
-
-The periodic refresh only adds new websites. Changes to an existing website's interval or URL are not copied into its schedule entry. Soft-deleted websites can remain scheduled until the pusher restarts.
-
-Schedule members are full JSON strings. Changing that string creates a different sorted-set member, so updates need to remove the previous member or use stable website IDs with settings stored separately.
-
-### Regional execution
-
-The pusher attaches the regions configured in `MONITOR_REGIONS`, and the Cloudflare code passes a `colo` field to `fetch`. This is not a verified mechanism for choosing where each request executes. Region labels in stored results should not be used as proof of geographic coverage.
-
-Cloudflare documents `request.cf.colo` as information about the data center handling an incoming request. It is not listed as a supported outgoing `RequestInit.cf` placement option. See the [Cloudflare Request documentation](https://developers.cloudflare.com/workers/runtime-apis/request/).
-
-Region IDs come from `packages/store/regions.ts`, which both the pusher and the seed script use.
-
-### Product integration and tests
-
-The dashboard reads live data from the API: per-website status and 24h uptime, time-bucketed uptime and response time (`/website/:id/stats`), and recent checks.
-
-Email OTP delivery exists. Incident detection and monitoring alert delivery are separate features that still need implementation. Alert channels can be configured from the dashboard but are not used yet.
-
-The current test files do not validate this pipeline: there is no API test suite, and Cloudflare tests still expect the starter `Hello World!` response. Useful coverage would verify job encoding, scheduler updates, failed-write recovery, retry deduplication, and the checker's request and response contract.
+- **Execution location:** region IDs are metadata; the existing checker does not establish execution in each requested region. Incident processing requires one configured region. Multi-region routing and quorum are not implemented.
+- **Scheduler and delivery concurrency:** the scheduler is single-process. The webhook polling loop is intended for one worker for the demo; delivery receivers should still deduplicate event IDs.
+- **Availability:** an outage shorter than the confirmation interval can be missed, including during database unavailability. Stale results are not evidence that a target is up or down.
+- **Integrations:** generic webhook delivery is implemented. Email, SMS, Slack, Discord, and Telegram channel records can exist but do not yet send monitoring alerts. Signup OTP email is separate.
+- **SSL and service guarantees:** certificate-expiry monitoring and an availability SLA are not implemented.
+- **Data and deployment:** the monitoring migration is additive, but existing hosted databases must be reviewed before applying it. The landing page waitlist is a separate database.
