@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma, Prisma } from "store/client";
+import { currentMonitorStatus } from "./monitorStatus";
 
 const MIN_INTERVAL = 30;
 const MAX_INTERVAL = 3600;
@@ -48,7 +49,8 @@ type LatestRow = {
     createdAt: Date;
 };
 
-const getSummaries = async (websiteIds: string[]) => {
+const getSummaries = async (websites: { id: string; monitorInterval: number }[]) => {
+    const websiteIds = websites.map((website) => website.id);
     if (!websiteIds.length) return new Map();
 
     const ids = Prisma.join(websiteIds);
@@ -73,7 +75,7 @@ const getSummaries = async (websiteIds: string[]) => {
         const last = latest.find((row) => row.websiteId === id);
         const summary = summaries.find((row) => row.websiteId === id);
         byId.set(id, {
-            status: last?.status ?? "UNKNOWN",
+            status: currentMonitorStatus(last, websites.find((website) => website.id === id)?.monitorInterval ?? 60),
             lastCheckedAt: last?.createdAt ?? null,
             lastResponseTime: last?.responseTime ?? null,
             uptime24h: summary && summary.total ? (summary.up / summary.total) * 100 : null,
@@ -106,7 +108,7 @@ const getAllWebsites = async (req: Request, res: Response) => {
             },
             orderBy: { createdAt: "desc" },
         });
-        const summaries = await getSummaries(websites.map((website) => website.id));
+        const summaries = await getSummaries(websites);
         res.status(200).json(websites.map((website) => ({ ...website, ...summaries.get(website.id) })));
     } catch (error) {
         console.log(error);
@@ -123,7 +125,7 @@ const getWebsiteById = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Website not found" });
         }
 
-        const summaries = await getSummaries([website.id]);
+        const summaries = await getSummaries([website]);
         res.status(200).json({ ...website, ...summaries.get(website.id) });
     } catch (error) {
         console.log(error);
@@ -358,6 +360,15 @@ const getWebsiteChecks = async (req: Request, res: Response) => {
     }
 };
 
+const getWebsiteIncidents = async (req: Request, res: Response) => {
+    try {
+        const website = await findOwnedWebsite(req.params.id as string, (req as any).user.id);
+        if (!website) return res.status(404).json({ error: "Website not found" });
+        const incidents = await prisma.incident.findMany({ where: { websiteId: website.id }, orderBy: { startedAt: "desc" }, take: 50, select: { id: true, startedAt: true, recoveredAt: true, reason: true, deliveries: { select: { id: true, eventType: true, status: true, attempts: true } } } });
+        return res.json(incidents);
+    } catch (error) { console.error(error); return res.status(500).json({ error: "Failed to fetch incidents" }); }
+};
+
 export {
     getAllWebsites,
     getWebsiteById,
@@ -366,4 +377,5 @@ export {
     deleteWebsiteById,
     getWebsiteStats,
     getWebsiteChecks,
+    getWebsiteIncidents,
 };

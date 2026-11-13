@@ -113,6 +113,7 @@ export default function SignIn() {
                 </div>
               </div>
 
+              {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
               <Button
                 type="submit"
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -123,7 +124,7 @@ export default function SignIn() {
             </form>
 
             <div className="text-center text-sm text-gray-600">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
                 className="text-emerald-600 hover:text-emerald-700 font-medium"

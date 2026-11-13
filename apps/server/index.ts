@@ -43,7 +43,9 @@ import profileRoutes from "./routes/v1/profileRoutes";
 import websiteRoutes from "./routes/v1/websiteRoutes";
 import alertRoutes from "./routes/v1/alertRoutes";
 import { errorHandler } from "./middlewares/error";
+import demoRoutes from "./routes/v1/demoRoutes";
 
+app.use("/api/v1/demo", demoRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1/website", websiteRoutes);

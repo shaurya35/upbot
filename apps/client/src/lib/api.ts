@@ -50,6 +50,8 @@ export type Check = {
   region: { code: string; name: string };
 };
 
+export type Incident = { id: string; startedAt: string; recoveredAt: string | null; reason: string | null; deliveries: { id: string; eventType: string; status: string; attempts: number }[] };
+
 export type AlertType = "EMAIL" | "SMS" | "DISCORD" | "SLACK" | "WEBHOOK" | "TELEGRAM";
 
 export type AlertChannel = {
@@ -152,6 +154,7 @@ export const websiteApi = {
   remove: (id: string) => api.delete(`/website/${id}`).then((r) => r.data),
   stats: (id: string, range: StatsRange) =>
     api.get<WebsiteStats>(`/website/${id}/stats`, { params: { range } }).then((r) => r.data),
+  incidents: (id: string) => api.get<Incident[]>(`/website/${id}/incidents`).then((r) => r.data),
   checks: (id: string, limit = 50) =>
     api.get<Check[]>(`/website/${id}/checks`, { params: { limit } }).then((r) => r.data),
 };

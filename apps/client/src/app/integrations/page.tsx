@@ -26,7 +26,7 @@ const channelTarget = (channel: AlertChannel) => channel.webhookUrl ?? channel.e
 export default function IntegrationsPage() {
   const { user } = useAuth()
   const [channels, setChannels] = useState<AlertChannel[] | null>(null)
-  const [type, setType] = useState<AlertType>("DISCORD")
+  const [type, setType] = useState<AlertType>("WEBHOOK")
   const [target, setTarget] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -77,8 +77,7 @@ export default function IntegrationsPage() {
       </div>
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        Alert delivery is not implemented yet. Channels you add here are saved and will be used once incident
-        detection ships.
+        Generic webhooks receive outage and recovery events for all your monitors. Other channel types are saved but do not send alerts yet.
       </div>
 
       <Card className="border-gray-200">
@@ -101,8 +100,8 @@ export default function IntegrationsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {CHANNEL_TYPES.map((option) => (
-                    <SelectItem key={option.type} value={option.type}>
-                      {option.label}
+                    <SelectItem key={option.type} value={option.type} disabled={option.type !== "WEBHOOK"}>
+                      {option.label}{option.type !== "WEBHOOK" ? " (coming soon)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

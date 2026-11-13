@@ -214,7 +214,7 @@ export default function DashboardPage() {
         <Card className="border-gray-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold">Website Status</CardTitle>
-            <CardDescription className="text-xs">Status, 24h uptime and response time for each website</CardDescription>
+            <CardDescription className="text-xs">Status, observed 24h uptime and response time for each website</CardDescription>
           </CardHeader>
           <CardContent>
             {websites === null ? (
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                         >
                           {status.label}
                         </Badge>
-                        <span className="text-xs text-gray-600 w-16 text-right hidden md:inline" title="24h uptime">
+                        <span className="text-xs text-gray-600 w-16 text-right hidden md:inline" title="Observed 24h uptime">
                           {formatUptime(website.uptime24h)}
                         </span>
                         <span className="text-xs text-gray-600 w-14 text-right hidden md:inline" title="Avg response (24h)">

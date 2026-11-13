@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { isAxiosError } from "axios"
 import { useParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { ArrowLeft, BarChart3, CheckCircle, Clock, ExternalLink, HelpCircle, Pencil, Trash2, TrendingUp, XCircle } from "lucide-react"
@@ -22,7 +23,8 @@ import {
 import { AppShell } from "@/components/app-shell"
 import { useAuth } from "@/contexts/AuthProvider"
 import { WebsiteFormDialog } from "@/components/website-form-dialog"
-import { getErrorMessage, websiteApi, type Check, type StatsRange, type Website, type WebsiteStats } from "@/lib/api"
+import { IncidentHistory } from "@/components/incident-history"
+import { getErrorMessage, websiteApi, type Check, type Incident, type StatsRange, type Website, type WebsiteStats } from "@/lib/api"
 import { formatInterval, formatMs, formatUptime, STATUS_STYLES, timeAgo } from "@/lib/format"
 
 const RANGES: StatsRange[] = ["24h", "7d", "30d"]
@@ -69,6 +71,7 @@ export default function WebsiteDetailPage() {
   const [website, setWebsite] = useState<Website | null>(null)
   const [stats, setStats] = useState<WebsiteStats | null>(null)
   const [checks, setChecks] = useState<Check[] | null>(null)
+  const [incidents, setIncidents] = useState<Incident[]>([])
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editOpen, setEditOpen] = useState(false)
@@ -76,17 +79,19 @@ export default function WebsiteDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const [site, siteStats, recentChecks] = await Promise.all([
+      const [site, siteStats, recentChecks, incidentHistory] = await Promise.all([
         websiteApi.get(websiteId),
         websiteApi.stats(websiteId, range),
         websiteApi.checks(websiteId, 20),
+        websiteApi.incidents(websiteId),
       ])
       setWebsite(site)
       setStats(siteStats)
       setChecks(recentChecks)
+      setIncidents(incidentHistory)
       setError(null)
-    } catch (err: any) {
-      if (err?.response?.status === 404) setNotFound(true)
+    } catch (err: unknown) {
+      if (isAxiosError(err) && err.response?.status === 404) setNotFound(true)
       else setError(getErrorMessage(err))
     }
   }, [websiteId, range])
@@ -112,7 +117,7 @@ export default function WebsiteDetailPage() {
       <AppShell>
         <div className="text-center py-20">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Website Not Found</h1>
-          <p className="text-gray-600 mb-4">The website you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-4">The website you&apos;re looking for doesn&apos;t exist.</p>
           <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
         </div>
       </AppShell>
@@ -201,10 +206,10 @@ export default function WebsiteDetailPage() {
           <SummaryCard label="Last Checked" icon={<Clock className="w-4 h-4 text-gray-400" />}>
             <p className="text-sm font-semibold text-gray-900">{timeAgo(website?.lastCheckedAt)}</p>
           </SummaryCard>
-          <SummaryCard label="7-Day Uptime" icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}>
+          <SummaryCard label="7-Day Observed Uptime" icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}>
             <p className="text-sm font-semibold text-emerald-600">{formatUptime(stats?.uptime["7d"])}</p>
           </SummaryCard>
-          <SummaryCard label="30-Day Uptime" icon={<BarChart3 className="w-4 h-4 text-emerald-500" />}>
+          <SummaryCard label="30-Day Observed Uptime" icon={<BarChart3 className="w-4 h-4 text-emerald-500" />}>
             <p className="text-sm font-semibold text-emerald-600">{formatUptime(stats?.uptime["30d"])}</p>
           </SummaryCard>
         </div>
@@ -232,7 +237,7 @@ export default function WebsiteDetailPage() {
             </div>
             <div className="grid grid-cols-3 gap-2 text-center pt-2">
               <div>
-                <p className="text-xs text-gray-500">Uptime</p>
+                <p className="text-xs text-gray-500">Observed Uptime</p>
                 <p className="text-sm font-semibold text-emerald-600">{formatUptime(stats?.summary.uptime)}</p>
               </div>
               <div>
@@ -321,12 +326,17 @@ export default function WebsiteDetailPage() {
                 <span className="text-sm font-semibold text-red-600">{formatMs(stats?.summary.maxResponseTime)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600">24h Uptime</span>
+                <span className="text-xs text-gray-600">24h Observed Uptime</span>
                 <span className="text-sm font-semibold">{formatUptime(stats?.uptime["24h"])}</span>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        <Card className="border-gray-200">
+          <CardHeader className="pb-3"><CardTitle className="text-base font-semibold">Incident history</CardTitle></CardHeader>
+          <CardContent><IncidentHistory incidents={incidents} /></CardContent>
+        </Card>
 
         <Card className="border-gray-200">
           <CardHeader className="pb-3">
